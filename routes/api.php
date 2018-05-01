@@ -17,3 +17,8 @@ use Illuminate\Http\Request;
 Route::group(['namespace' => 'User'],function(){
     Route::post('/wx_login','UserController@wx_login');
 });
+
+
+Route::group(['namespace' => 'Cate'],function(){
+    Route::resource('/cate','CateController');
+});

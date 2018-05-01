@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\User;
 
+use App\Utils\ReturnData;
 use App\Utils\WXBizDataCrypt;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
@@ -38,24 +39,21 @@ class UserController extends Controller
         //获取解密后的用户信息
         $user=$this->getUserInfo($encryptedData, $iv);
 
-        return $this->create(json_decode($user));
+        return $this->create(json_decode($user,true));
     }
 
     public function create($data){
-
-            $res1=DB::select('SELECT * FROM users WHERE openId = ? ',[$data->openId]);
+        $res1=DB::select('SELECT * FROM users WHERE openId = ? ',[$data['openId']]);
         if (count($res1)){
-            return  $res1[0]->id;
             $data['id']=$res1[0]->id;
         }else{
             DB::table('users')->insert(
-                ['openid' => $data->openId, 'nickname' =>$data->nickName]
+                ['openid' => $data['openId'], 'nickname' =>$data['nickName']]
             );
-            $res2=DB::select('SELECT * FROM users WHERE openId = ? ',[$data->openId]);
+            $res2=DB::select('SELECT * FROM users WHERE openId = ? ',[$data['openId']]);
             $data['id']=$res2[0]->id;
-
         }
-      return $data;
+      return ReturnData::returnDataResponse($data,200);
     }
     public function getLoginInfo($code){
         return $this->authCodeAndCode2session($code);
