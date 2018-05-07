@@ -21,6 +21,17 @@ class ReturnData
    }
 
     /**
+     * 列表和count数
+     */
+    static  function  returnListResponse($list,$count,$status){
+        $result['status'] = $status;
+        $result['data']['list'] = $list;
+        $result['data']['count'] = $count;
+        $result['timestamp'] = time();
+        return response()->json($result);
+    }
+
+    /**
      * 空数据响应
      */
     static function returnEmptyDataResponse()
@@ -49,6 +60,15 @@ class ReturnData
     {
         $result['status'] = $status;
         $result['data'] = $data;
+        $result['timestamp'] = time();
+        return response()->json($result);
+    }
+    /**
+     * 错误的返回
+     */
+    static  function  returnDataError($message,$status){
+        $result['status'] = $status;
+        $result['data']['msg'] = $message;
         $result['timestamp'] = time();
         return response()->json($result);
     }

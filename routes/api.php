@@ -21,4 +21,10 @@ Route::group(['namespace' => 'User'],function(){
 
 Route::group(['namespace' => 'Cate'],function(){
     Route::resource('/cate','CateController');
+    Route::get ('/keyword','CateController@keyword');
+});
+
+Route::group(['namespace' => 'Product'],function(){
+    Route::resource('/product','ProductController');
+
 });

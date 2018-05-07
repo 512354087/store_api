@@ -21,6 +21,11 @@ class CateController extends Controller
         return ReturnData::returnNoPageListResponse($data,200);
     }
 
+    public function keyword(Request $request){
+        $pid=$request->input('pid') ? $request->input('pid') : 0;
+        $data = DB::select('select * from product_cate WHERE  pid = ? ',[$pid]);
+        return ReturnData::returnNoPageListResponse($data,200);
+    }
     /**
      * Show the form for creating a new resource.
      *
