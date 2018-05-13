@@ -26,5 +26,7 @@ Route::group(['namespace' => 'Cate'],function(){
 
 Route::group(['namespace' => 'Product'],function(){
     Route::resource('/product','ProductController');
+    Route::get('/discount','ProductController@discount');
 
 });
+

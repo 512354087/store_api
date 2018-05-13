@@ -115,4 +115,26 @@ class ProductController extends Controller
     {
         //
     }
+
+    /**
+     * @param Request $request   获得折扣商品00
+     */
+    public function discount(Request $request)
+    {
+        try{
+            $offset = $request->input('offset') ? $request->input('offset') : 0;
+            $limit = $request->input('limit') ? $request->input('limit') : 6;
+            $res=DB::table('product_discount')
+            ->leftJoin('product','product_discount.product_id', '=', 'product.id')
+            ->offset($offset)
+            ->limit($limit)
+            ->get();
+            $count = DB::table('product_discount')
+                ->leftJoin('product','product_discount.product_id', '=', 'product.id')
+                ->count();
+          return ReturnData::returnListResponse($res,$count,200);
+        } catch (\Exception $e){
+            return ReturnData::returnDataError($e,402);
+        }
+    }
 }
