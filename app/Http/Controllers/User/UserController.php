@@ -2,11 +2,13 @@
 
 namespace App\Http\Controllers\User;
 
+use App\User;
 use App\Utils\ReturnData;
 use App\Utils\WXBizDataCrypt;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 
 
 class UserController extends Controller
@@ -27,6 +29,14 @@ class UserController extends Controller
         $this->code2session_url = config('app.code2session_url', '');
     }
 
+    public function index(Request $request)
+    {
+        $id=$request->input('id');
+        $user=User::where('id', $id)->get();
+        return ReturnData::returnDataResponse($user,200);
+
+    }
+
     public function wx_login()
     {
         //code 在小程序端使用 wx.login 获取
@@ -35,25 +45,29 @@ class UserController extends Controller
         $encryptedData = request('encryptedData', '');
         $iv = request('iv', '');
         $res=$this->getLoginInfo($code);
-
         //获取解密后的用户信息
         $user=$this->getUserInfo($encryptedData, $iv);
-
-        return $this->create(json_decode($user,true));
+        return $this->create(json_decode($user,true),$res);
     }
 
-    public function create($data){
+    public function create($data,$res){
+        $token = Hash::make($res['openid'].$res['session_key']);
         $res1=DB::select('SELECT * FROM users WHERE openId = ? ',[$data['openId']]);
         if (count($res1)){
-            $data['id']=$res1[0]->id;
+          DB::table('users')
+                ->where('openId',$data['openId'])
+                ->update(['token' => $token]);
         }else{
             DB::table('users')->insert(
-                ['openid' => $data['openId'], 'nickname' =>$data['nickName']]
+                ['openid' => $data['openId'], 'nickname' =>$data['nickName'],'token'=>$token]
             );
-            $res2=DB::select('SELECT * FROM users WHERE openId = ? ',[$data['openId']]);
-            $data['id']=$res2[0]->id;
         }
-      return ReturnData::returnDataResponse($data,200);
+        $res2=DB::select('SELECT * FROM users WHERE openId = ? ',[$data['openId']]);
+        $data['id']=$res2[0]->id;
+        $data['token']=$res2[0]->token;
+        $data['expires_in']=$res['expires_in'];
+
+        return ReturnData::returnDataResponse($data,200);
     }
     public function getLoginInfo($code){
         return $this->authCodeAndCode2session($code);

@@ -19,14 +19,20 @@ Route::group(['namespace' => 'User'],function(){
 });
 
 
-Route::group(['namespace' => 'Cate'],function(){
+Route::group(['namespace' => 'Cate','middleware'=>['token']],function(){
     Route::resource('/cate','CateController');
     Route::get ('/keyword','CateController@keyword');
 });
 
-Route::group(['namespace' => 'Product'],function(){
+Route::group(['namespace' => 'Product','middleware'=>['token']],function(){
     Route::resource('/product','ProductController');
     Route::get('/discount','ProductController@discount');
 
 });
+
+Route::group(['namespace' => 'User','middleware'=>['token']],function(){
+    Route::get('/user','UserController@index');
+});
+
+
 
