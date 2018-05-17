@@ -17,7 +17,7 @@ class CheckToken
      */
     public function handle($request, Closure $next)
     {
-        $token = $request->header('token');;
+        $token = $request->header('token');
        if($token){
            $user=DB::table('users')
                ->where('token',$token)

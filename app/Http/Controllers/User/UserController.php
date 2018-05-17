@@ -2,7 +2,8 @@
 
 namespace App\Http\Controllers\User;
 
-use App\User;
+
+use App\Model\User;
 use App\Utils\ReturnData;
 use App\Utils\WXBizDataCrypt;
 use Illuminate\Http\Request;
@@ -31,10 +32,14 @@ class UserController extends Controller
 
     public function index(Request $request)
     {
-        $id=$request->input('id');
-        $user=User::where('id', $id)->get();
-        return ReturnData::returnDataResponse($user,200);
 
+
+    }
+
+    public function show($id)
+    {
+        $user=User::where('id', $id)->first();
+        return ReturnData::returnDataResponse($user,200);
     }
 
     public function wx_login()
