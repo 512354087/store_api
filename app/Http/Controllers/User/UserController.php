@@ -64,7 +64,7 @@ class UserController extends Controller
                 ->update(['token' => $token]);
         }else{
             DB::table('users')->insert(
-                ['openid' => $data['openId'], 'nickname' =>$data['nickName'],'token'=>$token]
+                ['openid' => $data['openId'], 'nickname' =>$data['nickName'],'token'=>$token,'address'=>$data['country'].$data['province'].$data['city'],]
             );
         }
         $res2=DB::select('SELECT * FROM users WHERE openId = ? ',[$data['openId']]);
@@ -141,5 +141,19 @@ class UserController extends Controller
             ];
         }
         return $decodeData;
+    }
+
+    /**
+     *  更新用户信息
+     */
+    public function update($id)
+    {
+        try{
+
+        }catch (e){
+            
+        }
+        $res=User::where('id', $id)
+            ->update(['phone' => ]);
     }
 }
