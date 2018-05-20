@@ -146,14 +146,30 @@ class UserController extends Controller
     /**
      *  更新用户信息
      */
-    public function update($id)
+    public function edit(Request $request,$id)
     {
-        try{
+    try{
+         $phone=$request->input('phone') ? $request->input('phone') : '';
 
-        }catch (e){
-            
+         $name=$request->input('name') ? $request->input('name') : '';
+
+        $data=array(
+           'phone'=>$phone,
+            'name'=>$name
+        );
+        foreach( $data as $k=>$v){
+            ;
+            if( !$v )
+             unset( $data[$k] );
         }
-        $res=User::where('id', $id)
-            ->update(['phone' => ]);
+        User::where('id', $id)
+            ->update($data);
+
+            return ReturnData::returnDataResponse(1,200);
+
+        }catch (\Exception $e){
+           return ReturnData::returnDataError('验证失败',402);
+        }
+
     }
 }

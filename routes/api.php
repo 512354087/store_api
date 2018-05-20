@@ -31,8 +31,19 @@ Route::group(['namespace' => 'Product','middleware'=>['token']],function(){
 });
 
 Route::group(['namespace' => 'User','middleware'=>['token']],function(){
+    Route::resource('/user_address','UserAddressController');
     Route::get('/user/{id}','UserController@show');
+    Route::put('/user/{id}','UserController@edit');
+
 });
 
 
+/**
+ * 通用的接口
+ */
+Route::group(['namespace' => 'Address'],function(){
+    Route::resource('/address','AddressController');
+
+
+});
 
