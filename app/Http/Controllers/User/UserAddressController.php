@@ -2,10 +2,12 @@
 
 namespace App\Http\Controllers\User;
 
+use App\Model\Address;
 use App\Model\UserAddress;
 use App\Utils\ReturnData;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
+use Illuminate\Support\Facades\DB;
 
 class UserAddressController extends Controller
 {
@@ -16,9 +18,22 @@ class UserAddressController extends Controller
      */
     public function index(Request $request)
     {
-       $user_address=UserAddress::get();
 
-        return ReturnData::returnNoPageListResponse($user_address,200);
+        $user_id=$request->input('user_id') ? $request->input('user_id') : '';
+        if($user_id)
+            $user_address=UserAddress::where('user_id',$user_id)->get();
+        else
+            $user_address=UserAddress::get();
+            foreach($user_address  as $v => $item){
+                $res=Address::leftJoin('address','province_id','=','id')->get();
+                $user_address['address_name']=$res;
+            }
+
+            return ReturnData::returnNoPageListResponse($user_address,200);
+
+
+
+
     }
 
     /**
