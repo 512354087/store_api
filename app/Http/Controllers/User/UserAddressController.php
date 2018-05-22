@@ -18,19 +18,22 @@ class UserAddressController extends Controller
      */
     public function index(Request $request)
     {
-
+       try{
         $user_id=$request->input('user_id') ? $request->input('user_id') : '';
+           $user_address=UserAddress::select('user_address.*','address1.name as province','address2.name as city','address3.name as county','address4.name as town ')
+               ->leftJoin('address as address1','user_address.province_id','=','address1.id')
+               ->leftJoin('address as address2','user_address.city_id','=','address2.id')
+               ->leftJoin('address as address3','user_address.county_id','=','address3.id')
+               ->leftJoin('address as address4','user_address.town_id','=','address4.id');
         if($user_id)
-            $user_address=UserAddress::where('user_id',$user_id)->get();
+            $res=$user_address->where('user_id',$user_id)->get();
         else
-            $user_address=UserAddress::get();
-            foreach($user_address  as $v => $item){
-                $res=Address::leftJoin('address','province_id','=','id')->get();
-                $user_address['address_name']=$res;
-            }
+            $res=$user_address->get();
+            return ReturnData::returnNoPageListResponse($res,200);
 
-            return ReturnData::returnNoPageListResponse($user_address,200);
-
+       }catch (\Exception $e){
+            return ReturnData::returnDataError('参数错误',401);
+       }
 
 
 
