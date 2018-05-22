@@ -57,9 +57,7 @@ class UserAddressController extends Controller
      */
     public function store(Request $request)
     {
-
        // try{
-
             $user=$request->all();
             $user_id=$request->input('user_id');
             if($user['is_default']){
@@ -107,6 +105,11 @@ class UserAddressController extends Controller
     public function update(Request $request, $id)
     {
         //
+        try{
+   
+        }catch (\Exception $e){
+
+        }
     }
 
     /**
