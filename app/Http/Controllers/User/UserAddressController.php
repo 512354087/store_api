@@ -102,11 +102,17 @@ class UserAddressController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, $id)
+    public function update(Request $request,$id)
     {
-        //
+
         try{
-   
+            $user=$request->all();
+            return $user;
+          $userAddress=UserAddress::find($id);
+            $userAddress->phone = $data['phone'];
+            $userAddress->save();
+          return ReturnData::returnDataResponse(1,200);
+
         }catch (\Exception $e){
 
         }
