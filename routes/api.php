@@ -43,8 +43,6 @@ Route::group(['namespace' => 'User','middleware'=>['token']],function(){
  */
 Route::group(['namespace' => 'Address'],function(){
     Route::resource('/address','AddressController');
-
-
 });
 
 

@@ -105,17 +105,16 @@ class UserAddressController extends Controller
     public function update(Request $request,$id)
     {
 
-        try{
-            $user=$request->all();
-            return $user;
-            $userAddress=UserAddress::find($id);
-            $userAddress->phone = $data['phone'];
-            $userAddress->save();
-          return ReturnData::returnDataResponse(1,200);
+       try{
+           $user=$request->all();
+           $userAddress=UserAddress::where('id',$id)->update($user);
+           return ReturnData::returnDataResponse($userAddress,200);
+       }catch (\Exception $e){
+           return ReturnData::returnDataError('参数错误',401);
+       }
 
-        }catch (\Exception $e){
 
-        }
+
     }
 
     /**
