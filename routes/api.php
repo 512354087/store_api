@@ -47,3 +47,13 @@ Route::group(['namespace' => 'Address'],function(){
 
 });
 
+
+
+/**
+ * Fnb 分类
+ */
+
+Route::group(['namespace' => 'Fnb'],function(){
+    Route::resource('/fnb/category','CategoryController');
+
+});

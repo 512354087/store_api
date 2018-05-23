@@ -53,6 +53,20 @@ return [
             'strict' => true,
             'engine' => null,
         ],
+        'fnb' => [
+            'driver' => 'mysql',
+            'host' => env('DB_HOST_FNB', '106.14.118.65'),
+            'port' => env('DB_PORT_FNB', '3306'),
+            'database' => env('DB_DATABASE_FNB', 'forge'),
+            'username' => env('DB_USERNAME_FNB', 'forge'),
+            'password' => env('DB_PASSWORD_FNB', ''),
+            'unix_socket' => env('DB_SOCKET', ''),
+            'charset' => 'utf8mb4',
+            'collation' => 'utf8mb4_unicode_ci',
+            'prefix' => '',
+            'strict' => true,
+            'engine' => null,
+        ],
 
         'pgsql' => [
             'driver' => 'pgsql',
