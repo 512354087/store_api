@@ -11,10 +11,8 @@ class CategoryController extends Controller
     // 查找出为空的 分类id   fnb
     public function index()
     {
-        select * FROM
-        (SELECT aa.id,COUNT(t_category.id) as count FROM
-                (SELECT b.* FROM t_category AS a LEFT JOIN t_category AS b ON a.id = b.parent_id WHERE a.parent_id =0) as aa
-                INNER JOIN t_category on t_category.parent_id= aa.id GROUP BY aa.id) as bb where count=0
+        // 获得所有的二级分类
+//     SELECT  c.id,COUNT(c.id)  FROM (SELECT b.* FROM t_category AS a INNER JOIN t_category AS b ON a.id = b.parent_id WHERE a.parent_id =0 GROUP BY b.id) AS c INNER JOIN t_category AS d ON c.id = d.parent_id GROUP BY c.id
         $res=DB::connection('fnb')->table('t_category')->where('parent_id',0)->get();
         $list=[];
         foreach ($res as $key => $value){

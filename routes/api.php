@@ -14,26 +14,35 @@ use Illuminate\Http\Request;
 */
 
 
+/**
+ * 用户模块
+ */
 Route::group(['namespace' => 'User'],function(){
     Route::post('/wx_login','UserController@wx_login');
 });
+Route::group(['namespace' => 'User','middleware'=>['token']],function(){
+    Route::resource('/user_address','UserAddressController');  //收货地址相关
+    Route::get('/user/{id}','UserController@show');   //用户信息相关
+    Route::put('/user/{id}','UserController@edit');
+    Route::resource('/user_point','UserPointController');    //积分模块相关
+});
 
-
+/**
+ * 分类模块
+ */
 Route::group(['namespace' => 'Cate','middleware'=>['token']],function(){
     Route::resource('/cate','CateController');
     Route::get ('/keyword','CateController@keyword');
 });
 
+
+
+/**
+ *   积分模块
+ */
 Route::group(['namespace' => 'Product','middleware'=>['token']],function(){
-    Route::resource('/product','ProductController');
+
     Route::get('/discount','ProductController@discount');
-
-});
-
-Route::group(['namespace' => 'User','middleware'=>['token']],function(){
-    Route::resource('/user_address','UserAddressController');
-    Route::get('/user/{id}','UserController@show');
-    Route::put('/user/{id}','UserController@edit');
 
 });
 
@@ -44,6 +53,8 @@ Route::group(['namespace' => 'User','middleware'=>['token']],function(){
 Route::group(['namespace' => 'Address'],function(){
     Route::resource('/address','AddressController');
 });
+
+
 
 
 
