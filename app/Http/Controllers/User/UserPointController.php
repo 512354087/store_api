@@ -16,22 +16,27 @@ class UserPointController extends Controller
      */
     public function index(Request $request)
     {
+        $offset = $request->input('offset') ? $request->input('offset') : 0;
+        $limit = $request->input('limit') ? $request->input('limit') : 10;
+        $this->validate($request, [
+            'user_id' => 'required|integer'
+        ]);
+        $user_id = $request->input('user_id');
+        //搜索某个时间段内的数据库匹配的数据
+        // SELECT *,SUM(a.point) as total  FROM (SELECT user_point_log.*,user_point_type.title AS title FROM user_point_log LEFT JOIN user_point_type ON user_point_type.id = user_point_log.type_id ) AS a
+        //WHERE a.user_id = 1  And  a.create_at  between '2010-7-12 11:18:54' and '2019-7-12 11:22:20'
+
+        //搜索一个星期内数据库匹配的数据
+        // SELECT user_point_log.*,user_point_type.title AS title FROM user_point_log LEFT JOIN user_point_type ON user_point_type.id = user_point_log.type_id
+        // WHERE user_point_log.user_id = 1 And  DATE_SUB(CURDATE(), INTERVAL 7 DAY) <= date(user_point_log.create_at);
+
+        $list=DB::table('user_point_log')->leftJoin('user_point_type','user_point_log.type_id','=','user_point_type.id')
+            ->where([['user_id', '=', $user_id]])
+            ->get();
+        return ReturnData::returnListResponse($list,10,200);
         try {
-            $offset = $request->input('offset') ? $request->input('offset') : 0;
-            $limit = $request->input('limit') ? $request->input('limit') : 10;
-            $this->validate($request, [
-                'user_id' => 'required|integer'
-            ]);
-            $user_id = $request->input('user_id');
-            $points_record = DB::table('user_point')
-              ->leftJoin('user_point_log as b','user_point.id','=','b.points_id')
-              ->where('user_id',$user_id)
-              ->offset($offset)
-              ->limit($limit)
-              ->get();
-            return ReturnData::returnListResponse($points_record,10,200);
         }catch (\Exception $e){
-            return ReturnData::returnDataError('参数错误',200);
+            return ReturnData::returnDataError('参数错误',200); 
         }
     }
 

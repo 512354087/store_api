@@ -38,8 +38,12 @@ class UserController extends Controller
 
     public function show($id)
     {
-        $user=User::where('id', $id)->first();
-        return ReturnData::returnDataResponse($user,200);
+        try{
+            $user=User::select('users.*','user_point.id as point_id ','user_point.point as point')->leftJoin('user_point','users.id','=','user_point.user_id')->where('users.id', $id)->first();
+            return ReturnData::returnDataResponse($user,200);
+        }catch (\Exception $e){
+            return ReturnData::returnDataError('参数验证失败',401);
+        }
     }
 
     public function wx_login()
