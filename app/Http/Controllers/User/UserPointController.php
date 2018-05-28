@@ -40,7 +40,7 @@ class UserPointController extends Controller
             return ReturnData::returnListResponse($list,10,200);
 
         }catch (\Exception $e){
-            return ReturnData::returnDataError('参数错误',200);
+            return ReturnData::returnDataError('参数错误',402);
         }
     }
 
@@ -85,7 +85,7 @@ class UserPointController extends Controller
             }
 
         }catch (\Exception $e){
-            return ReturnData::returnDataError($e,401);
+            return ReturnData::returnDataError($e,402);
         }
 
     }

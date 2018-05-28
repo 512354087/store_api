@@ -35,13 +35,19 @@ Route::group(['namespace' => 'Cate','middleware'=>['token']],function(){
     Route::get ('/keyword','CateController@keyword');
 });
 
+/**
+ *  订单模块
+ */
+Route::group(['namespace' => 'Order','middleware'=>['token']],function(){
+    Route::resource('/order','OrderController');
+});
+
 
 
 /**
  *   积分模块
  */
 Route::group(['namespace' => 'Product','middleware'=>['token']],function(){
-
     Route::get('/discount','ProductController@discount');
 
 });

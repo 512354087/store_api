@@ -4,14 +4,11 @@ namespace App\Model;
 
 use Illuminate\Database\Eloquent\Model;
 
-class Order extends Model
+class Stock extends Model
 {
-    //
-    protected $table = 'order';
+    protected $table = 'product_stock';
 
     public $timestamps = false;
 
-    protected  $guarded=[];
 
-  
 }
