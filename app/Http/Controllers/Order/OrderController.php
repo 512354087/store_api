@@ -6,7 +6,6 @@ use App\Model\Order;
 use App\Model\Product;
 use App\Utils\ReturnData;
 use App\Utils\Util;
-use Egulias\EmailValidator\Validation\Error\RFCWarnings;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 
@@ -69,7 +68,6 @@ class OrderController extends Controller
             //获得该商品的库存信息
             $stock=Product::where('product.id',$request->input('product_id'))
                 ->with('stock')
-               
                 ->first();
             return $stock;
             if (!$stock){
