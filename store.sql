@@ -1,16 +1,16 @@
 /*
 Navicat MySQL Data Transfer
 
-Source Server         : 自己装的mysql 
-Source Server Version : 50720
+Source Server         : localhost_3306
+Source Server Version : 50717
 Source Host           : localhost:3306
 Source Database       : store
 
 Target Server Type    : MYSQL
-Target Server Version : 50720
+Target Server Version : 50717
 File Encoding         : 65001
 
-Date: 2018-05-27 23:36:14
+Date: 2018-05-29 18:42:52
 */
 
 SET FOREIGN_KEY_CHECKS=0;
@@ -43561,21 +43561,42 @@ CREATE TABLE `order` (
   `id` int(11) unsigned NOT NULL AUTO_INCREMENT,
   `order_no` varchar(32) DEFAULT NULL,
   `product_num` int(11) DEFAULT NULL,
-  `status` int(4) unsigned DEFAULT NULL COMMENT '101 待支付 102待收货 103已完成',
+  `status` int(4) unsigned DEFAULT '101' COMMENT '101 待支付 102待收货 103已完成',
   `product_id` int(11) DEFAULT NULL,
   `payable_total` float(20,2) DEFAULT NULL,
-  `fact total` float(20,2) DEFAULT NULL,
+  `fact_total` float(20,2) DEFAULT NULL,
   `discount_total` float(20,2) DEFAULT NULL,
-  `is_delete` int(4) DEFAULT NULL,
+  `is_delete` int(4) unsigned NOT NULL DEFAULT '0',
   `user_id` int(11) DEFAULT NULL,
   `user_address_id` int(11) DEFAULT NULL,
   `remark` varchar(255) DEFAULT NULL COMMENT '备注',
   `created_at` datetime DEFAULT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8;
 
 -- ----------------------------
 -- Records of order
+-- ----------------------------
+INSERT INTO `order` VALUES ('1', 'WXSTORE2018052917421332831', '5', '101', '1', '255.00', '315.00', '60.00', '0', '1', '1', '', '2018-05-29 17:42:13');
+INSERT INTO `order` VALUES ('2', 'WXSTORE2018052917422339981', '1', '101', '1', '63.00', '63.00', '0.00', '0', '1', '1', '', '2018-05-29 17:42:23');
+
+-- ----------------------------
+-- Table structure for order_detail
+-- ----------------------------
+DROP TABLE IF EXISTS `order_detail`;
+CREATE TABLE `order_detail` (
+  `id` int(11) unsigned NOT NULL AUTO_INCREMENT,
+  `order_no` varchar(32) DEFAULT NULL,
+  `product_id` int(11) DEFAULT NULL,
+  `product_num` int(11) DEFAULT NULL,
+  `discount` float(10,2) DEFAULT NULL,
+  `payable` float(10,2) DEFAULT NULL,
+  `fact` float(10,2) DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+-- ----------------------------
+-- Records of order_detail
 -- ----------------------------
 
 -- ----------------------------
@@ -43713,7 +43734,7 @@ DROP TABLE IF EXISTS `product_discount`;
 CREATE TABLE `product_discount` (
   `id` int(11) NOT NULL,
   `purchasers` int(11) DEFAULT NULL,
-  `discount` int(255) DEFAULT NULL,
+  `discount` float(32,2) DEFAULT NULL,
   `product_id` int(11) DEFAULT NULL,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
@@ -43721,7 +43742,7 @@ CREATE TABLE `product_discount` (
 -- ----------------------------
 -- Records of product_discount
 -- ----------------------------
-INSERT INTO `product_discount` VALUES ('1', '3', '60', '1');
+INSERT INTO `product_discount` VALUES ('1', '3', '60.00', '1');
 
 -- ----------------------------
 -- Table structure for product_stock
@@ -43739,7 +43760,7 @@ CREATE TABLE `product_stock` (
 -- ----------------------------
 -- Records of product_stock
 -- ----------------------------
-INSERT INTO `product_stock` VALUES ('1', '1', '1', '55', '10');
+INSERT INTO `product_stock` VALUES ('1', '1', '4', '55', '10');
 INSERT INTO `product_stock` VALUES ('2', '1', '3', '58', '11');
 INSERT INTO `product_stock` VALUES ('3', '2', '4', '2', '10');
 INSERT INTO `product_stock` VALUES ('4', '2', '4', '2', '10');

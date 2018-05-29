@@ -65,17 +65,39 @@ class OrderController extends Controller
                 'size_id'=>'required|integer',
                 'color_id'=>'required|integer',
             ]);
+            $req= $request->input();
+
             //获得该商品的库存信息
-            $stock=Product::where('product.id',$request->input('product_id'))
-                ->with('stock')
-                ->first();
-            return $stock;
+            $stock=Product::where('id',$request->input('product_id'))->first()->stock($request->input('color_id'),$request->input('size_id'),$request->input('product_num'))->first();
             if (!$stock){
                 throw new \Exception('您需要的商品库存不足');
             }
+            $product=Product::where('id',$request->input('product_id'))->with('discount')->first();
+            $product->stock=$stock;
+            $order=$request->all();
+            //查看是否满足折扣条件
+            if ($request->input('product_num')>=$product->discount->purchasers){
+                $order['payable_total']=round(($product->price * $order['product_num'])-$product->discount->discount,2);
+                $order['discount_total']=$product->discount->discount;
+            }else{
+                $order['payable_total']=round($product->price * $order['product_num'],2);
+                $order['discount_total']=0;
+            }
+            $order['fact_total']=round($product->price * $order['product_num'],2);
+            $newOrder= new Order();
+            $newOrder->order_no=Util::randomNum(4,$request->input('user_id'));
+            $newOrder->product_num=$order['product_num'];
+            $newOrder->product_id=$order['product_id'];
+            $newOrder->user_id=$order['user_id'];
+            $newOrder->user_address_id=$order['user_address_id'];
+            $newOrder->payable_total=$order['payable_total'];
+            $newOrder->discount_total=$order['discount_total'];
+            $newOrder->fact_total=$order['fact_total'];
+            $newOrder->created_at=date('Y-m-d H:i:s');
+            $newOrder->remark=$request->input('remark') ? $order['remark'] : '';
+            $newOrder->save();
 
-            $order=new Order();
-            //return ReturnData::returnDataResponse(,200);
+            return ReturnData::returnDataResponse($newOrder,200);
         }catch (\Exception $e){
             return ReturnData::returnDataError($e->getMessage(),402);
         }

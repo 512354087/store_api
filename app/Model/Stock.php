@@ -10,5 +10,9 @@ class Stock extends Model
 
     public $timestamps = false;
 
+    public function product()
+    {
+      $this->belongsToMany('App\Model\Product','product_id');
+    }
 
 }
