@@ -65,26 +65,34 @@ class UserPointController extends Controller
         try{
             $pointLog=$request->all();
             $user_id=$request->input('user_id');
-            $isHasPoint=DB::table('user_point')->where('user_id', $user_id)->exists();
+            //判断数据库中是否有用户   是否有积分表
+            $Point=DB::table('user_point')->where('user_id', $user_id)->first();
             $isHasUser=DB::table('users')->where('id', $user_id)->exists();
-            if(!$isHasPoint && $isHasUser){
-                $Point=new UserPoint();
-                $Point->user_id = $user_id;
-                $Point->created_at->date("Y-m-d H:i:s",time());
-                $Point->updated_at->date("Y-m-d H:i:s",time());
-                $Point->save();
-            };
-            if($isHasUser && $isHasPoint){
-                $pointLog['create_at']=date("Y-m-d H:i:s",time());
-                $result=UserPointLog::create($pointLog);
-                $resdata=$this->updateNum($result->type,$result->point,$user_id);  //更改用户积分数
-                if($resdata){
-                    return ReturnData::returnDataResponse($result,200);
-                }
+            //手动控制数据库事务
+            DB::beginTransaction();
+              $pointLog['created_at'] =date("Y-m-d  H:i:s",time());
 
+            if ($isHasUser){
+                DB::table('user_point_log')->insert([
+                    $pointLog
+                ]);
+
+                if($Point){
+                    $num=$pointLog['type']==1 ? $pointLog['point'] + $Point->num :  $Point->num - $pointLog['point'];
+                    DB::table('user_point')->where('user_id', $user_id)->update(['created_at' => date("Y-m-d H:i:s",time()),'updated_at'=>date("Y-m-d H:i:s",time()),'num'=> $num>0 ? $num :0]);
+
+                }else{
+                    $num=$pointLog['type']==1 ? $pointLog['point'] + $Point->num :  $Point->num - $pointLog['point'];
+                    DB::table('user_point')->insert([
+                        ['created_at' => date("Y-m-d H:i:s",time()),'updated_at'=>date("Y-m-d H:i:s",time()),'user_id'=>$user_id,'num'=> $num >0 ? $num :0]
+                    ]);
+                }
             }
+          DB::commit();
+           return ReturnData::returnDataResponse(1,200);
 
         }catch (\Exception $e){
+           DB::rollBack();
             return ReturnData::returnDataError($e,402);
         }
 

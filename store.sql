@@ -1,16 +1,16 @@
 /*
-Navicat MySQL Data Transfer
+Navicat MariaDB Data Transfer
 
-Source Server         : localhost_3306
-Source Server Version : 50717
-Source Host           : localhost:3306
+Source Server         : fwq
+Source Server Version : 50556
+Source Host           : 39.105.145.23:3306
 Source Database       : store
 
-Target Server Type    : MYSQL
-Target Server Version : 50717
+Target Server Type    : MariaDB
+Target Server Version : 50556
 File Encoding         : 65001
 
-Date: 2018-05-29 18:42:52
+Date: 2018-05-31 16:54:07
 */
 
 SET FOREIGN_KEY_CHECKS=0;
@@ -43560,15 +43560,14 @@ DROP TABLE IF EXISTS `order`;
 CREATE TABLE `order` (
   `id` int(11) unsigned NOT NULL AUTO_INCREMENT,
   `order_no` varchar(32) DEFAULT NULL,
-  `product_num` int(11) DEFAULT NULL,
+  `product_num` int(11) DEFAULT NULL COMMENT '商品种类数量',
   `status` int(4) unsigned DEFAULT '101' COMMENT '101 待支付 102待收货 103已完成',
-  `product_id` int(11) DEFAULT NULL,
-  `payable_total` float(20,2) DEFAULT NULL,
-  `fact_total` float(20,2) DEFAULT NULL,
-  `discount_total` float(20,2) DEFAULT NULL,
+  `payable_total` float(20,2) DEFAULT NULL COMMENT '订单实付总额',
+  `fact_total` float(20,2) DEFAULT NULL COMMENT '订单应付总额',
+  `discount_total` float(20,2) DEFAULT NULL COMMENT '折扣金额',
   `is_delete` int(4) unsigned NOT NULL DEFAULT '0',
   `user_id` int(11) DEFAULT NULL,
-  `user_address_id` int(11) DEFAULT NULL,
+  `user_address_id` int(11) DEFAULT NULL COMMENT '收货地址',
   `remark` varchar(255) DEFAULT NULL COMMENT '备注',
   `created_at` datetime DEFAULT NULL,
   PRIMARY KEY (`id`)
@@ -43577,8 +43576,8 @@ CREATE TABLE `order` (
 -- ----------------------------
 -- Records of order
 -- ----------------------------
-INSERT INTO `order` VALUES ('1', 'WXSTORE2018052917421332831', '5', '101', '1', '255.00', '315.00', '60.00', '0', '1', '1', '', '2018-05-29 17:42:13');
-INSERT INTO `order` VALUES ('2', 'WXSTORE2018052917422339981', '1', '101', '1', '63.00', '63.00', '0.00', '0', '1', '1', '', '2018-05-29 17:42:23');
+INSERT INTO `order` VALUES ('1', 'WXSTORE2018052917421332831', '5', '101', '255.00', '315.00', '60.00', '0', '1', '1', '', '2018-05-29 17:42:13');
+INSERT INTO `order` VALUES ('2', 'WXSTORE2018052917422339981', '1', '101', '63.00', '63.00', '0.00', '0', '1', '1', '', '2018-05-29 17:42:23');
 
 -- ----------------------------
 -- Table structure for order_detail
@@ -43586,18 +43585,19 @@ INSERT INTO `order` VALUES ('2', 'WXSTORE2018052917422339981', '1', '101', '1', 
 DROP TABLE IF EXISTS `order_detail`;
 CREATE TABLE `order_detail` (
   `id` int(11) unsigned NOT NULL AUTO_INCREMENT,
-  `order_no` varchar(32) DEFAULT NULL,
   `product_id` int(11) DEFAULT NULL,
   `product_num` int(11) DEFAULT NULL,
   `discount` float(10,2) DEFAULT NULL,
   `payable` float(10,2) DEFAULT NULL,
   `fact` float(10,2) DEFAULT NULL,
+  `order_id` int(11) unsigned DEFAULT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8;
 
 -- ----------------------------
 -- Records of order_detail
 -- ----------------------------
+INSERT INTO `order_detail` VALUES ('1', '1', '5', '60.00', '255.00', '315.00', '1');
 
 -- ----------------------------
 -- Table structure for product
@@ -43769,26 +43769,6 @@ INSERT INTO `product_stock` VALUES ('6', '4', '4', '2', '10');
 INSERT INTO `product_stock` VALUES ('7', '5', '4', '2', '10');
 
 -- ----------------------------
--- Table structure for users
--- ----------------------------
-DROP TABLE IF EXISTS `users`;
-CREATE TABLE `users` (
-  `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
-  `nickname` varchar(255) DEFAULT NULL,
-  `name` varchar(255) DEFAULT NULL,
-  `phone` int(11) DEFAULT NULL,
-  `address` varchar(255) DEFAULT NULL,
-  `openid` varchar(255) DEFAULT NULL,
-  `token` varchar(255) DEFAULT NULL,
-  PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8;
-
--- ----------------------------
--- Records of users
--- ----------------------------
-INSERT INTO `users` VALUES ('1', 'Donie', null, null, 'ChinaHubeiWuhan', 'o7P370MXWItymGiZkztWK98e6xng', '$2y$10$H6PhZMenCoFp8aemlsR0ueoSDGeZI6ljIf408Lmwsy1kijt1XoSny');
-
--- ----------------------------
 -- Table structure for user_address
 -- ----------------------------
 DROP TABLE IF EXISTS `user_address`;
@@ -43839,9 +43819,9 @@ CREATE TABLE `user_point_log` (
   `type` int(4) DEFAULT NULL COMMENT '1 增加  2 使用',
   `user_id` int(11) unsigned DEFAULT NULL,
   `type_id` int(11) unsigned DEFAULT NULL,
-  `create_at` datetime DEFAULT NULL,
+  `created_at` datetime DEFAULT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=13 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=22 DEFAULT CHARSET=utf8;
 
 -- ----------------------------
 -- Records of user_point_log
@@ -43858,6 +43838,7 @@ INSERT INTO `user_point_log` VALUES ('9', '2', '1', '1', '2', '2018-05-27 13:16:
 INSERT INTO `user_point_log` VALUES ('10', '2', '1', '1', '2', '2018-05-27 13:22:58');
 INSERT INTO `user_point_log` VALUES ('11', '10', '1', '1', '2', '2018-05-27 13:33:26');
 INSERT INTO `user_point_log` VALUES ('12', '10', '2', '1', '2', '2018-05-27 13:36:11');
+INSERT INTO `user_point_log` VALUES ('17', '12', '1', '1', '2', null);
 
 -- ----------------------------
 -- Table structure for user_point_type
@@ -43890,3 +43871,23 @@ CREATE TABLE `user_star` (
 -- ----------------------------
 -- Records of user_star
 -- ----------------------------
+
+-- ----------------------------
+-- Table structure for users
+-- ----------------------------
+DROP TABLE IF EXISTS `users`;
+CREATE TABLE `users` (
+  `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
+  `nickname` varchar(255) DEFAULT NULL,
+  `name` varchar(255) DEFAULT NULL,
+  `phone` char(11) DEFAULT NULL,
+  `address` varchar(255) DEFAULT NULL,
+  `openid` varchar(255) DEFAULT NULL,
+  `token` varchar(255) DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8;
+
+-- ----------------------------
+-- Records of users
+-- ----------------------------
+INSERT INTO `users` VALUES ('1', 'Donie', 'Donie1', '13297090782', 'ChinaHubeiWuhan', 'o7P370MXWItymGiZkztWK98e6xng', '$2y$10$H6PhZMenCoFp8aemlsR0ueoSDGeZI6ljIf408Lmwsy1kijt1XoSny');

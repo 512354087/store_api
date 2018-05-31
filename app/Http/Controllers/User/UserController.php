@@ -39,10 +39,10 @@ class UserController extends Controller
     public function show($id)
     {
         try{
-            $user=User::select('users.*','user_point.id as point_id ','user_point.point as point')->leftJoin('user_point','users.id','=','user_point.user_id')->where('users.id', $id)->first();
+            $user=User::select('users.*','user_point.id as point_id ','user_point.num as point')->leftJoin('user_point','users.id','=','user_point.user_id')->where('users.id', $id)->first();
             return ReturnData::returnDataResponse($user,200);
         }catch (\Exception $e){
-            return ReturnData::returnDataError('参数验证失败',402);
+            return ReturnData::returnDataError('参数验证失败',401);
         }
     }
 
@@ -152,25 +152,19 @@ class UserController extends Controller
      */
     public function edit(Request $request,$id)
     {
-    try{
+        try{
          $phone=$request->input('phone') ? $request->input('phone') : '';
-
          $name=$request->input('name') ? $request->input('name') : '';
-
-        $data=array(
+         $data=array(
            'phone'=>$phone,
             'name'=>$name
-        );
+         );
         foreach( $data as $k=>$v){
-            ;
-            if( !$v )
-             unset( $data[$k] );
+            if( !$v) unset( $data[$k] );
         }
         User::where('id', $id)
             ->update($data);
-
             return ReturnData::returnDataResponse(1,200);
-
         }catch (\Exception $e){
            return ReturnData::returnDataError('验证失败',402);
         }

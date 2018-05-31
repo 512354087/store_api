@@ -3,11 +3,13 @@
 namespace App\Http\Controllers\Order;
 
 use App\Model\Order;
+use App\Model\OrderDetail;
 use App\Model\Product;
 use App\Utils\ReturnData;
 use App\Utils\Util;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
+use Illuminate\Support\Facades\DB;
 
 class OrderController extends Controller
 {
@@ -27,9 +29,10 @@ class OrderController extends Controller
                 ->limit($limit)
                 ->offset($offset)
                 ->get();
+            foreach ($list as $k=>$v){
+                $v->order_list=OrderDetail::where('order_no',$v->order_no)->get();
+            }
             $count=Order::whereRaw("(CASE WHEN '$user_id'<> 0 THEN user_id=$user_id  ELSE 1=1 END)")
-                ->limit($limit)
-                ->offset($offset)
                 ->count();
             return ReturnData::returnListResponse($list,$count,200);
 
@@ -58,17 +61,19 @@ class OrderController extends Controller
     {
         try{
             $this->validate($request,[
-                'product_num'=>'required|integer',
-                'product_id'=> 'required|integer',
+                'product_arr'=> 'required',
                 'user_id'=>'required|integer',
-                'user_address_id'=>'required|integer',
-                'size_id'=>'required|integer',
-                'color_id'=>'required|integer',
+                'user_address_id'=>'required|integer'
             ]);
-            $req= $request->input();
-
             //获得该商品的库存信息
-            $stock=Product::where('id',$request->input('product_id'))->first()->stock($request->input('color_id'),$request->input('size_id'),$request->input('product_num'))->first();
+            $product_arr=json_decode($request->input('product_arr'),true);
+            return $product_arr;
+            $stock=[];
+            foreach ($product_arr as $k=>$v){
+                $stock=DB::select('select * from product_srock WHERE id = ? ',$v->id);
+            }
+
+           return $stock;
             if (!$stock){
                 throw new \Exception('您需要的商品库存不足');
             }
