@@ -67,43 +67,48 @@ class OrderController extends Controller
             ]);
             //获得该商品的库存信息
             $product_arr=json_decode($request->input('product_arr'),true);
-            return $product_arr;
-            $stock=[];
+            $arr = [];  //商品数组
             foreach ($product_arr as $k=>$v){
-                $stock=DB::select('select * from product_srock WHERE id = ? ',$v->id);
+                if (count($arr)){
+                    foreach ($arr as $k=>$val) {
+                       if ($val['id']==$v['id']){
+                           $arr[$k]['num']=$val['num'] + $v['num'];
+                       }else{
+                           array_push($arr,["id"=>$v['id'],"num"=>$v['num']]);
+                       }
+                    }
+                }else{
+                    array_push($arr,["id"=>$v['id'],"num"=>$v['num']]);
+                }
+                $list=DB::select('select product_stock.*,IF(product_discount.purchasers <= ? , product_discount.discount , 0) as discount from product_stock LEFT JOIN product_discount ON discount  
+                    WHERE product_stock.product_id = ? AND product_stock.color_id = ? AND  product_stock.size_id= ? ',[$v['num'],$v['id'],$v['color_id'],$v['size_id']]);
+                if (!$list){
+                    throw new \Exception('您需要的商品库存不足');
+                 }
             }
-
-           return $stock;
-            if (!$stock){
-                throw new \Exception('您需要的商品库存不足');
+            //商品的种类数   订单实付款数   订单实付款数     订单的总折扣数
+            $product_num=null;  $payable_total=null;  $fact_total=null;  $discount_total=null; 
+            foreach($arr as $k=>$v){
+                $product_list=DB::select('select product.*,IF(product_discount.purchasers <= ? , product_discount.discount , 0) as discount from product LEFT JOIN product_discount ON discount  
+                    WHERE product.id = ?  ',[$v['num'],$v['id']]);
+                $arr[$k]['product_list']=$product_list[0];
+                $arr[$k]['payable_total']=$product_list[0]['price']*$v['num']-$product_list[0]['discount'];
+                $arr[$k]['fact']=$product_list[0]['price']*$v['num'];
+                $arr[$k]['discount']=$product_list[0]['discount'];
             }
-            $product=Product::where('id',$request->input('product_id'))->with('discount')->first();
-            $product->stock=$stock;
-            $order=$request->all();
-            //查看是否满足折扣条件
-            if ($request->input('product_num')>=$product->discount->purchasers){
-                $order['payable_total']=round(($product->price * $order['product_num'])-$product->discount->discount,2);
-                $order['discount_total']=$product->discount->discount;
-            }else{
-                $order['payable_total']=round($product->price * $order['product_num'],2);
-                $order['discount_total']=0;
-            }
-            $order['fact_total']=round($product->price * $order['product_num'],2);
-            $newOrder= new Order();
-            $newOrder->order_no=Util::randomNum(4,$request->input('user_id'));
-            $newOrder->product_num=$order['product_num'];
-            $newOrder->product_id=$order['product_id'];
-            $newOrder->user_id=$order['user_id'];
-            $newOrder->user_address_id=$order['user_address_id'];
-            $newOrder->payable_total=$order['payable_total'];
-            $newOrder->discount_total=$order['discount_total'];
-            $newOrder->fact_total=$order['fact_total'];
-            $newOrder->created_at=date('Y-m-d H:i:s');
-            $newOrder->remark=$request->input('remark') ? $order['remark'] : '';
-            $newOrder->save();
-
-            return ReturnData::returnDataResponse($newOrder,200);
+            DB::beginTransaction();
+            DB::table('order')->insert([
+                [
+                    'order_no'=>Util::randomNum(4,$request->input('user_id')),
+                    'product_num'=>count($arr),
+                    'status'=>101,
+                    'payable_total'=>$payable_total
+                ]
+            ]);
+            DB::commit();
+            return ReturnData::returnDataResponse(1,200);
         }catch (\Exception $e){
+            DB::rollBack();
             return ReturnData::returnDataError($e->getMessage(),402);
         }
 

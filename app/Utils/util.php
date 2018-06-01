@@ -20,5 +20,5 @@ class Util
         return 'WXSTORE'.$time.rand(pow(10,($length-1)), pow(10,$length)-1).$uid;
 
     }
-
+  
 }
