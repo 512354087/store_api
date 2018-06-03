@@ -71,11 +71,11 @@ class OrderController extends Controller
             foreach ($product_arr as $k=>$v){
                 if (count($arr)){
                     foreach ($arr as $k=>$val) {
-                       if ($val['id']==$v['id']){
-                           $arr[$k]['num']=$val['num'] + $v['num'];
-                       }else{
-                           array_push($arr,["id"=>$v['id'],"num"=>$v['num']]);
-                       }
+                        if ($val['id']==$v['id']){
+                            $arr[$k]['num']=$val['num'] + $v['num'];
+                        }else{
+                            array_push($arr,["id"=>$v['id'],"num"=>$v['num']]);
+                        }
                     }
                 }else{
                     array_push($arr,["id"=>$v['id'],"num"=>$v['num']]);
@@ -84,29 +84,69 @@ class OrderController extends Controller
                     WHERE product_stock.product_id = ? AND product_stock.color_id = ? AND  product_stock.size_id= ? ',[$v['num'],$v['id'],$v['color_id'],$v['size_id']]);
                 if (!$list){
                     throw new \Exception('您需要的商品库存不足');
-                 }
+                }
             }
+
             //商品的种类数   订单实付款数   订单实付款数     订单的总折扣数
-            $product_num=null;  $payable_total=null;  $fact_total=null;  $discount_total=null; 
+            $product_num=null;  $payable_total=null;  $fact_total=null;  $discount_total=null;
             foreach($arr as $k=>$v){
                 $product_list=DB::select('select product.*,IF(product_discount.purchasers <= ? , product_discount.discount , 0) as discount from product LEFT JOIN product_discount ON discount  
                     WHERE product.id = ?  ',[$v['num'],$v['id']]);
                 $arr[$k]['product_list']=$product_list[0];
-                $arr[$k]['payable_total']=$product_list[0]['price']*$v['num']-$product_list[0]['discount'];
-                $arr[$k]['fact']=$product_list[0]['price']*$v['num'];
-                $arr[$k]['discount']=$product_list[0]['discount'];
+                $arr[$k]['payable']=$product_list[0]->price * $v['num'] - $product_list[0]->discount;
+                $arr[$k]['num']=$v['num'];
+                $arr[$k]['fact']=$product_list[0]->price * $v['num'];
+                $arr[$k]['discount']=$product_list[0]->discount;
+                $arr[$k]['product_id']=$v['id'];
+                $payable_total+=$product_list[0]->price * $v['num'] - $product_list[0]->discount;
+                $fact_total+=$product_list[0]->price * $v['num'];
+                $discount_total+= $product_list[0]->discount;
+                $product_num=count($arr);
             }
+
+            //这里有一系列的事物处理
             DB::beginTransaction();
-            DB::table('order')->insert([
+            //获得刚刚插入的记录id
+            $order_id=DB::table('order')->insertGetId(
                 [
                     'order_no'=>Util::randomNum(4,$request->input('user_id')),
-                    'product_num'=>count($arr),
                     'status'=>101,
-                    'payable_total'=>$payable_total
+                    'product_num'=>$product_num,
+                    'payable_total'=>$payable_total,
+                    'fact_total'=>$fact_total,
+                    'discount_total'=>$discount_total,
+                    'user_id'=>$request->input('user_id'),
+                    'user_address_id'=>$request->input('user_address_id'),
+                    'remark'=>$request->input('remark') ? $request->input('remark') : '',
+                    'created_at'=>date('Y-m-d H:i:s',time())
                 ]
-            ]);
+            );
+            $order_detail_arr=array();
+            foreach($arr as $k=>$v){
+                $a=array_except($v, ['id','product_list']);
+                $a['order_id']=$order_id;
+                array_push($order_detail_arr,$a);
+
+            }
+            //插入订单详情
+            DB::table('order_detail')->insert(
+                $order_detail_arr
+            );
+
+            //更新商品库存  //添加库存记录
+           foreach($product_arr  as $k=>$v){
+//               DB::table('product_stock')->where('id',$v['id'])->update(['num',]);
+//               DB::table('product_stock_log')->where('id',$v['id'])->update(['num',]);
+           }
+
+            //更新销售数量
+            foreach($arr as $k=>$v){
+                return gettype($v['product_list']);
+                DB::table('product')->where('id',$v['product_id'])->update(['num',$v['product_list']->sale_num+$v['num']]);
+            }
             DB::commit();
             return ReturnData::returnDataResponse(1,200);
+
         }catch (\Exception $e){
             DB::rollBack();
             return ReturnData::returnDataError($e->getMessage(),402);
