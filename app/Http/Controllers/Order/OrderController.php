@@ -141,8 +141,8 @@ class OrderController extends Controller
 
             //更新销售数量
             foreach($arr as $k=>$v){
-                return gettype($v['product_list']);
-                DB::table('product')->where('id',$v['product_id'])->update(['num',$v['product_list']->sale_num+$v['num']]);
+                //return gettype($v['product_list']);
+                DB::table('product')->where('id',$v['product_id'])->update(['sale_num'=>$v['product_list']->sale_num+$v['num']]);
             }
             DB::commit();
             return ReturnData::returnDataResponse(1,200);
