@@ -17,6 +17,15 @@ use Illuminate\Http\Request;
 /**
  * 用户模块
  */
+
+
+/**
+ * 测试队列
+ */
+
+Route::get('/test','Order\OrderController@test');
+
+
 Route::group(['namespace' => 'User'],function(){
     Route::post('/wx_login','UserController@wx_login');
 });
@@ -72,3 +81,5 @@ Route::group(['namespace' => 'Fnb'],function(){
     Route::resource('/fnb/category','CategoryController');
 
 });
+
+

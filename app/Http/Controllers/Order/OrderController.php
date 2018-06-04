@@ -1,10 +1,9 @@
 <?php
 
 namespace App\Http\Controllers\Order;
-
+use App\Jobs\ChangeOrderStatus;
 use App\Model\Order;
 use App\Model\OrderDetail;
-use App\Model\Product;
 use App\Utils\ReturnData;
 use App\Utils\Util;
 use Illuminate\Http\Request;
@@ -30,7 +29,7 @@ class OrderController extends Controller
                 ->offset($offset)
                 ->get();
             foreach ($list as $k=>$v){
-                $v->order_list=OrderDetail::where('order_no',$v->order_no)->get();
+                $v->order_detail=OrderDetail::selectRaw('*,product.id As product_id')->where('order_id',$v->id)->leftJoin('product','order_detail.product_id','=','product.id')->get();
             }
             $count=Order::whereRaw("(CASE WHEN '$user_id'<> 0 THEN user_id=$user_id  ELSE 1=1 END)")
                 ->count();
@@ -69,6 +68,12 @@ class OrderController extends Controller
             $product_arr=json_decode($request->input('product_arr'),true);
             $arr = [];  //商品数组
             foreach ($product_arr as $k=>$v){
+                $list=DB::select('select product_stock.*,IF(product_discount.purchasers <= ? , product_discount.discount , 0) as discount from product_stock LEFT JOIN product_discount ON discount  
+                    WHERE product_stock.product_id = ? AND product_stock.color_id = ? AND  product_stock.size_id= ?  AND  product_stock.num >= ?',[$v['num'],$v['id'],$v['color_id'],$v['size_id'],$v['num']]);
+                if (!$list){
+                    throw new \Exception('您需要的商品库存不足');
+                }
+                $product_arr[$k]['stock']=$list[0];
                 if (count($arr)){
                     foreach ($arr as $k=>$val) {
                         if ($val['id']==$v['id']){
@@ -78,13 +83,11 @@ class OrderController extends Controller
                         }
                     }
                 }else{
-                    array_push($arr,["id"=>$v['id'],"num"=>$v['num']]);
+                    array_push($arr,["id"=>$v['id'],"num"=>$v['num'],"stock"=>$list[0]]);
                 }
-                $list=DB::select('select product_stock.*,IF(product_discount.purchasers <= ? , product_discount.discount , 0) as discount from product_stock LEFT JOIN product_discount ON discount  
-                    WHERE product_stock.product_id = ? AND product_stock.color_id = ? AND  product_stock.size_id= ? ',[$v['num'],$v['id'],$v['color_id'],$v['size_id']]);
-                if (!$list){
-                    throw new \Exception('您需要的商品库存不足');
-                }
+
+
+
             }
 
             //商品的种类数   订单实付款数   订单实付款数     订单的总折扣数
@@ -92,7 +95,7 @@ class OrderController extends Controller
             foreach($arr as $k=>$v){
                 $product_list=DB::select('select product.*,IF(product_discount.purchasers <= ? , product_discount.discount , 0) as discount from product LEFT JOIN product_discount ON discount  
                     WHERE product.id = ?  ',[$v['num'],$v['id']]);
-                $arr[$k]['product_list']=$product_list[0];
+                $arr[$k]['product']=$product_list[0];
                 $arr[$k]['payable']=$product_list[0]->price * $v['num'] - $product_list[0]->discount;
                 $arr[$k]['num']=$v['num'];
                 $arr[$k]['fact']=$product_list[0]->price * $v['num'];
@@ -122,8 +125,9 @@ class OrderController extends Controller
                 ]
             );
             $order_detail_arr=array();
+
             foreach($arr as $k=>$v){
-                $a=array_except($v, ['id','product_list']);
+                $a=array_except($v, ['id','product','stock']);
                 $a['order_id']=$order_id;
                 array_push($order_detail_arr,$a);
 
@@ -134,15 +138,20 @@ class OrderController extends Controller
             );
 
             //更新商品库存  //添加库存记录
-           foreach($product_arr  as $k=>$v){
-//               DB::table('product_stock')->where('id',$v['id'])->update(['num',]);
-//               DB::table('product_stock_log')->where('id',$v['id'])->update(['num',]);
+           foreach($product_arr as $k=>$v){
+                 DB::table('product_stock')->where('id',$v['stock']->id)->update(['num'=>$v['stock']->num-$v['num']]);
+                 DB::table('product_stock_log')->insert([
+                     'stock_id'=>$v['stock']->id,
+                     'num'=>$v['num'],
+                     'type'=>2,                    //出库
+                     'created_at'=>date('Y-m-d H:i:s',time())
+                 ]);
            }
 
             //更新销售数量
             foreach($arr as $k=>$v){
-                //return gettype($v['product_list']);
-                DB::table('product')->where('id',$v['product_id'])->update(['sale_num'=>$v['product_list']->sale_num+$v['num']]);
+                //return gettype($v['product']);
+                DB::table('product')->where('id',$v['product_id'])->update(['sale_num'=>$v['product']->sale_num+$v['num']]);
             }
             DB::commit();
             return ReturnData::returnDataResponse(1,200);
@@ -198,5 +207,11 @@ class OrderController extends Controller
     public function destroy($id)
     {
         //
+    }
+
+    public function test(){
+
+        ChangeOrderStatus::dispatch();
+        return 1;
     }
 }

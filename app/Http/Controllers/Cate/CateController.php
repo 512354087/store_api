@@ -16,14 +16,15 @@ class CateController extends Controller
      */
     public function index(Request $request)
     {
-        $pid=$request->input('pid') ? $request->input('pid') : 0;
-        $data = DB::select('select * from product_cate WHERE  pid = ? ',[$pid]);
+        $pid=$request->input('pid') ? $request->input('pid') : false;
+        $data = DB::select('select * from product_cate WHERE 1=1 AND IF(?, pid = ?, 0 = 0)',[$pid,$pid]);
         return ReturnData::returnNoPageListResponse($data,200);
     }
 
     public function keyword(Request $request){
-        $pid=$request->input('pid') ? $request->input('pid') : 0;
-        $data = DB::select('select * from product_cate WHERE  pid = ? ',[$pid]);
+
+        $keyword=$request->input('keyword') ? $request->input('keyword') : '';
+        $data = DB::select('select * from product_cate WHERE cate_name like ? ',['%'.$keyword.'%']);
         return ReturnData::returnNoPageListResponse($data,200);
     }
     /**
