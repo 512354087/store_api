@@ -7,13 +7,15 @@ use Illuminate\Database\Eloquent\Model;
 class Order extends Model
 {
     //
-    protected $table = 'order';
+    protected $table = 't_order';
 
     public $timestamps = false;
 
     protected  $guarded=[];
+    
+    
 
      public function orderdetail(){
-         return $this->hasMany('App\Model\OrderDetail','order_no');
+         return $this->hasMany('App\Model\OrderDetail','order_id');
      }
 }

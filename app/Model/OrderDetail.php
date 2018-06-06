@@ -11,5 +11,7 @@ class OrderDetail extends Model
 
     public $timestamps='false';
 
-    
+    public function log(){
+        return $this->hasMany('App\Model\OrderDetailLog','order_detail_id');
+    }
 }

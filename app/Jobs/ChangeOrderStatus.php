@@ -7,6 +7,9 @@ use Illuminate\Queue\SerializesModels;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+
 
 /**
  * Class ChangeOrderStatus
@@ -17,17 +20,20 @@ use Illuminate\Foundation\Bus\Dispatchable;
 class ChangeOrderStatus implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+    protected $order_id;
+    protected $status;
+    protected $product_arr;
 
-    private $value;
 
     /**
      * Create a new job instance.
-     *
      * @return void
      */
-    public function __construct()
+    public function __construct($order_id,$status,$product_arr)
     {
-        $this->value="dongli";
+        $this->order_id=$order_id;
+        $this->status=$status;
+        $this->product_arr=$product_arr;
     }
 
     /**
@@ -37,11 +43,34 @@ class ChangeOrderStatus implements ShouldQueue
      */
     public function handle()
     {
-        Redis::hset('queue.test','name', $this->value);
+       //Log::info('已发送邮件->'.$this->email);
+
+        $order=DB::table('t_order')->where('id',$this->order_id)->get();
+        try{
+            //未付款
+            DB::beginTransaction();
+            if ($order[0]->status == 101){   //待支付  当订单状态为待支付
+                DB::table('t_order')->where('id',$this->order_id)->update(['status'=>$this->status]);
+                foreach($this->product_arr as $k=>$v){
+                    $num=DB::table('product_stock')->where('id',$v['stock']->id)->value('num');
+                    DB::table('product_stock')->where('id',$v['stock']->id)->update(['num'=>$num+$v['num']]);
+                    DB::table('product_stock_log')->insert([
+                        'num'=>$v['num'],
+                        'stock_id'=>$v['stock']->id,
+                        'type'=>2,
+                        'created_at'=>date('Y-h-d H:i:s',time())
+                    ]);
+                }
+            }
+            DB::commit();
+        }catch (\Exception $e){
+            DB::rollBack();
+            Log::error('id为'.$this->order_id.'队列执行失败');
+
+        }
+
+
     }
 
-    public function failed()
-    {
-        dump('failed');
-    }
+
 }

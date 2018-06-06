@@ -4,11 +4,15 @@ namespace App\Http\Controllers\Order;
 use App\Jobs\ChangeOrderStatus;
 use App\Model\Order;
 use App\Model\OrderDetail;
+use App\Model\Product;
 use App\Utils\ReturnData;
 use App\Utils\Util;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
+
 use Illuminate\Support\Facades\DB;
+
 
 class OrderController extends Controller
 {
@@ -67,6 +71,7 @@ class OrderController extends Controller
             //获得该商品的库存信息
             $product_arr=json_decode($request->input('product_arr'),true);
             $arr = [];  //商品数组
+
             foreach ($product_arr as $k=>$v){
                 $list=DB::select('select product_stock.*,IF(product_discount.purchasers <= ? , product_discount.discount , 0) as discount from product_stock LEFT JOIN product_discount ON discount  
                     WHERE product_stock.product_id = ? AND product_stock.color_id = ? AND  product_stock.size_id= ?  AND  product_stock.num >= ?',[$v['num'],$v['id'],$v['color_id'],$v['size_id'],$v['num']]);
@@ -85,9 +90,6 @@ class OrderController extends Controller
                 }else{
                     array_push($arr,["id"=>$v['id'],"num"=>$v['num'],"stock"=>$list[0]]);
                 }
-
-
-
             }
 
             //商品的种类数   订单实付款数   订单实付款数     订单的总折扣数
@@ -107,10 +109,11 @@ class OrderController extends Controller
                 $product_num=count($arr);
             }
 
+
             //这里有一系列的事物处理
             DB::beginTransaction();
             //获得刚刚插入的记录id
-            $order_id=DB::table('order')->insertGetId(
+            $order_id=DB::table('t_order')->insertGetId(
                 [
                     'order_no'=>Util::randomNum(4,$request->input('user_id')),
                     'status'=>101,
@@ -124,36 +127,37 @@ class OrderController extends Controller
                     'created_at'=>date('Y-m-d H:i:s',time())
                 ]
             );
-            $order_detail_arr=array();
 
             foreach($arr as $k=>$v){
                 $a=array_except($v, ['id','product','stock']);
                 $a['order_id']=$order_id;
-                array_push($order_detail_arr,$a);
+                //插入订单详情
+                $order_detail_id=DB::table('order_detail')->insertGetId(
+                    $a
+                );
+                //新增订单详情记录
+                foreach ($product_arr as $key=>$val){
+                    if ($val['id'] == $v['product_id']){
+                        DB::table('order_detail_log')->insert(
+                            [
+                                "order_detail_id"=>$order_detail_id,
+                                "stock_id"=>$val['stock']->id,
+                                "num"=>$val['num']
+                            ]
+                        );
+                    }
+
+                }
 
             }
-            //插入订单详情
-            DB::table('order_detail')->insert(
-                $order_detail_arr
-            );
 
             //更新商品库存  //添加库存记录
            foreach($product_arr as $k=>$v){
                  DB::table('product_stock')->where('id',$v['stock']->id)->update(['num'=>$v['stock']->num-$v['num']]);
-                 DB::table('product_stock_log')->insert([
-                     'stock_id'=>$v['stock']->id,
-                     'num'=>$v['num'],
-                     'type'=>2,                    //出库
-                     'created_at'=>date('Y-m-d H:i:s',time())
-                 ]);
            }
-
-            //更新销售数量
-            foreach($arr as $k=>$v){
-                //return gettype($v['product']);
-                DB::table('product')->where('id',$v['product_id'])->update(['sale_num'=>$v['product']->sale_num+$v['num']]);
-            }
             DB::commit();
+
+            dispatch((new ChangeOrderStatus($order_id,$status=105,$product_arr))->delay(Carbon::now()->addMinutes(1)));
             return ReturnData::returnDataResponse(1,200);
 
         }catch (\Exception $e){
@@ -172,7 +176,14 @@ class OrderController extends Controller
      */
     public function show($id)
     {
-        //
+        try{
+            $order=Order::where('id',$id)->with('orderdetail')->first();
+            return ReturnData::returnDataResponse($order,200);
+        }catch (\Exception $e){
+            return ReturnData::returnDataError('参数错误',402);
+
+        }
+
     }
 
     /**
@@ -195,7 +206,56 @@ class OrderController extends Controller
      */
     public function update(Request $request, $id)
     {
-        //
+        try{
+            $data=$request->only('status');
+            $order_status=DB::table('t_order')->where('id',$id)->value('status');
+            if ($data['status']==$order_status){
+               return $this->response= [
+                    'status' => 200,
+                    'msg' => '设置成功'
+                ];
+            }
+            $order_product_list=DB::table('order_detail')->where('order_id',$id)->get();
+            DB::beginTransaction();
+            switch ($data['status']){
+                case 104:    //交易完成  添加商品的销售量
+                    DB::table('t_order')->where('id',$id)->update(['status'=>$data['status']]);
+                    foreach ($order_product_list as $k=>$v){
+                        $product=Product::where('id',$v->product_id)->first();
+                        DB::table('product')->where('id',$v->product_id)->update(['sale_num'=>$product->sale_num+$v->num]);
+                    }
+                    break;
+                case 105:  //交易关闭  返回商品的库存
+                    DB::table('t_order')->where('id',$id)->update(['status'=>$data['status']]);
+                    $orderDetailList=OrderDetail::where('order_id',53)->with('log')->get();
+                    foreach ($orderDetailList as $k=>$v){
+                        //查询商品详情所对应的库存id
+                        foreach ($v['log'] as $key=>$val){
+                          //通过库存id返回相应库存
+                          DB::table('product_stock')->where('id',$val->id)->increment('num',$val->num);
+                          DB::table('product_stock_log')->insert([
+                              'num'=>$val->num,
+                              'stock_id'=>$val->id,
+                              'type'=>2,
+                              'created_at'=>date('Y-h-d H:i:s',time())
+                          ]);
+                        }
+                    }
+                    break;
+                default:
+                    DB::table('t_order')->where('id',$id)->update(['status'=>$data['status']]);
+            }
+           DB::commit();
+           return $this->response=[
+               'status' => 200,
+               'msg' => '设置成功'
+           ];
+
+        }catch (\Exception $e){
+            DB::rollBack();
+            return ReturnData::returnDataError('修改失败',402);
+        }
+
     }
 
     /**
@@ -208,10 +268,11 @@ class OrderController extends Controller
     {
         //
     }
-
+//测试队列
     public function test(){
-
-        ChangeOrderStatus::dispatch();
-        return 1;
+        // Redis::set('name', 'Taylor');
+//       dispatch(
+//           (new ChangeOrderStatus('512354087@qq.com'))->delay(Carbon::now()->addSeconds(15))
+//        );
     }
 }
