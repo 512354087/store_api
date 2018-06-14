@@ -79,21 +79,13 @@ class OrderController extends Controller
                     throw new \Exception('您需要的商品库存不足');
                 }
                 $product_arr[$k]['stock']=$list[0];
-                if (count($arr)){
-                    foreach ($arr as $k=>$val) {
-                        if ($val['id']==$v['id']){
-                            $arr[$k]['num']=$val['num'] + $v['num'];
-                        }else{
-                            array_push($arr,["id"=>$v['id'],"num"=>$v['num']]);
-                        }
-                    }
-                }else{
-                    array_push($arr,["id"=>$v['id'],"num"=>$v['num'],"stock"=>$list[0]]);
-                }
+                array_push($arr,["id"=>$v['id'],"num"=>$v['num'],"stock"=>$list[0]]);
+
             }
 
+
             //商品的种类数   订单实付款数   订单实付款数     订单的总折扣数
-            $product_num=null;  $payable_total=null;  $fact_total=null;  $discount_total=null;
+            $product_num_arr=array(); $product_num=null; $payable_total=null;  $fact_total=null;  $discount_total=null;
             foreach($arr as $k=>$v){
                 $product_list=DB::select('select product.*,IF(product_discount.purchasers <= ? , product_discount.discount , 0) as discount from product LEFT JOIN product_discount ON discount  
                     WHERE product.id = ?  ',[$v['num'],$v['id']]);
@@ -103,14 +95,17 @@ class OrderController extends Controller
                 $arr[$k]['fact']=$product_list[0]->price * $v['num'];
                 $arr[$k]['discount']=$product_list[0]->discount;
                 $arr[$k]['product_id']=$v['id'];
+                $arr[$k]['stock_id']=$v['stock']->id;
                 $payable_total+=$product_list[0]->price * $v['num'] - $product_list[0]->discount;
                 $fact_total+=$product_list[0]->price * $v['num'];
                 $discount_total+= $product_list[0]->discount;
-                $product_num=count($arr);
-            }
+                if (!in_array($v['id'], $product_num_arr)){
+                   array_push($product_num_arr,$v['id']);
+                }
+            };
+            $product_num=count($product_num_arr);
 
-
-            //这里有一系列的事物处理
+            //这里有一系列的事务处理
             DB::beginTransaction();
             //获得刚刚插入的记录id
             $order_id=DB::table('t_order')->insertGetId(
@@ -127,28 +122,13 @@ class OrderController extends Controller
                     'created_at'=>date('Y-m-d H:i:s',time())
                 ]
             );
-
             foreach($arr as $k=>$v){
                 $a=array_except($v, ['id','product','stock']);
                 $a['order_id']=$order_id;
                 //插入订单详情
-                $order_detail_id=DB::table('order_detail')->insertGetId(
+                DB::table('order_detail')->insert(
                     $a
                 );
-                //新增订单详情记录
-                foreach ($product_arr as $key=>$val){
-                    if ($val['id'] == $v['product_id']){
-                        DB::table('order_detail_log')->insert(
-                            [
-                                "order_detail_id"=>$order_detail_id,
-                                "stock_id"=>$val['stock']->id,
-                                "num"=>$val['num']
-                            ]
-                        );
-                    }
-
-                }
-
             }
 
             //更新商品库存  //添加库存记录
@@ -156,7 +136,6 @@ class OrderController extends Controller
                  DB::table('product_stock')->where('id',$v['stock']->id)->update(['num'=>$v['stock']->num-$v['num']]);
            }
             DB::commit();
-
             dispatch((new ChangeOrderStatus($order_id,$status=105,$product_arr))->delay(Carbon::now()->addMinutes(1)));
             return ReturnData::returnDataResponse(1,200);
 

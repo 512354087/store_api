@@ -18,7 +18,6 @@ class Util
         $time=date('YmdHis');
         //pow(10,2) 10的2次方
         return 'WXSTORE'.$time.rand(pow(10,($length-1)), pow(10,$length)-1).$uid;
-
     }
   
 }

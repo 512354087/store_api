@@ -54,12 +54,6 @@ class ChangeOrderStatus implements ShouldQueue
                 foreach($this->product_arr as $k=>$v){
                     $num=DB::table('product_stock')->where('id',$v['stock']->id)->value('num');
                     DB::table('product_stock')->where('id',$v['stock']->id)->update(['num'=>$num+$v['num']]);
-                    DB::table('product_stock_log')->insert([
-                        'num'=>$v['num'],
-                        'stock_id'=>$v['stock']->id,
-                        'type'=>2,
-                        'created_at'=>date('Y-h-d H:i:s',time())
-                    ]);
                 }
             }
             DB::commit();

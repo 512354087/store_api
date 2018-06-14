@@ -13,9 +13,10 @@ class Order extends Model
 
     protected  $guarded=[];
     
-    
 
-     public function orderdetail(){
+    public function orderdetail(){
+
          return $this->hasMany('App\Model\OrderDetail','order_id');
-     }
+
+    }
 }
