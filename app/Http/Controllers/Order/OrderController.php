@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Http\Controllers\Order;
 use App\Jobs\ChangeOrderStatus;
 use App\Model\Order;
@@ -29,6 +28,7 @@ class OrderController extends Controller
             $limit = $request->input('limit') ? $request->input('limit') : 10;
             $user_id=$request->input('user_id') ? $request->input('user_id') : 0;
             $list=Order::whereRaw("(CASE WHEN '$user_id'<> 0 THEN user_id=$user_id  ELSE 1=1 END)")
+                ->where('is_delete',0)
                 ->limit($limit)
                 ->offset($offset)
                 ->get();
@@ -212,12 +212,6 @@ class OrderController extends Controller
                         foreach ($v['log'] as $key=>$val){
                           //通过库存id返回相应库存
                           DB::table('product_stock')->where('id',$val->id)->increment('num',$val->num);
-                          DB::table('product_stock_log')->insert([
-                              'num'=>$val->num,
-                              'stock_id'=>$val->id,
-                              'type'=>2,
-                              'created_at'=>date('Y-h-d H:i:s',time())
-                          ]);
                         }
                     }
                     break;
@@ -245,7 +239,12 @@ class OrderController extends Controller
      */
     public function destroy($id)
     {
-        //
+        //  这里做软删除
+        try{
+           DB::table('t_order')->where(id,$id)->update(['is_delete' => 1]);
+        }catch (\Exception $e){
+          return ReturnData::returnDataError($e->getMessage(),402);
+        }
     }
 //测试队列
     public function test(){

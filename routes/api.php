@@ -34,6 +34,8 @@ Route::group(['namespace' => 'User','middleware'=>['token']],function(){
     Route::get('/user/{id}','UserController@show');   //用户信息相关
     Route::put('/user/{id}','UserController@edit');
     Route::resource('/user_point','UserPointController');    //积分模块相关
+    Route::resource('/user_star','UserStarController');    //用户收藏相关
+    Route::delete('/un_star/{product_id}/{user_id}','UserStarController@unStar');   //取消收藏
 });
 
 /**
@@ -83,3 +85,12 @@ Route::group(['namespace' => 'Fnb'],function(){
 });
 
 
+
+
+/**
+ * 购物车模块
+ */
+
+Route::group(['namespace' => 'ShoppingCart','middleware'=>['token']],function(){
+    Route::resource('/shopping_cart','ShoppingCartController');  //购车相关
+});
