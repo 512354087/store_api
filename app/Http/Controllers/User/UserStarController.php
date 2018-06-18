@@ -22,17 +22,12 @@ class UserStarController extends Controller
             ]);
             $limit=$request->input('limit') ? $request->input('limit') : 10;
             $offset=$request->input('offset') ? $request->input('offset') : 0;
-//            return $this->response=[
-//                'limit' => $limit,
-//                'offset' => $offset
-//            ];
             $res=DB::table('user_star')
                 ->where('user_id',$request->input('user_id'))
                 ->leftJoin('product','user_star.product_id','=','product.id')
                 ->limit($limit)
                 ->offset($offset)
                 ->get();
-
             $count=DB::table('user_star')
                 ->where('user_id',$request->input('user_id'))
                 ->leftJoin('product','user_star.product_id','=','product.id')
@@ -80,7 +75,6 @@ class UserStarController extends Controller
                     ['user_id' => $request->input('user_id'), 'product_id' => $request->input('product_id')]
                 );
             }
-
             return ReturnData::returnDataResponse('成功',200);
         }catch (\Exception $e){
             return ReturnData::returnDataError($e->getMessage(),401);
@@ -103,7 +97,6 @@ class UserStarController extends Controller
                     ['user_id', '=', $user_id]
                 ])->delete();
             }
-
             return ReturnData::returnDataResponse(['message'=>'删除成功'],200);
         }catch (\Exception $e){
             return ReturnData::returnDataError($e->getMessage(),401);
@@ -142,7 +135,7 @@ class UserStarController extends Controller
      */
     public function update(Request $request, $id)
     {
-        //
+
     }
 
     /**
@@ -154,7 +147,6 @@ class UserStarController extends Controller
     public function destroy($id)
     {
         //
-
 
     }
 }
