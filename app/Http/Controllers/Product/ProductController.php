@@ -79,7 +79,22 @@ class ProductController extends Controller
      */
     public function show($id)
     {
-        //
+        try{
+            $res=DB::table('product')
+                ->select('product_discount.*','product.id', 'product.title','product.product_no','product.price','product.sale_num','product.logo', 'product.brand_id','product.cate_id','product_brand.title as brand_name','product_cate.cate_name as cate_name','product_discount.purchasers as purchasers','product_discount.discount as discount' )
+                ->leftJoin('product_brand', 'product.brand_id', '=', 'product_brand.id')
+                ->leftJoin('product_cate','product.cate_id' ,'=','product_cate.id')
+                ->leftJoin('product_discount', 'product.id', '=', 'product_discount.product_id')
+                ->where('product.id',$id)
+                ->first();
+            $num=DB::select('select SUM(num) as num  from product_stock WHERE product_id = ?',[$res->id]);
+            $res->stock_num=$num[0]->num;
+              return ReturnData::returnDataResponse($res,200);
+        }catch (\Exception $e){
+              return ReturnData::returnDataError($e->getMessage(),402);
+        }
+
+
     }
 
     /**

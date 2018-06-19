@@ -53,16 +53,12 @@ Route::group(['namespace' => 'Order','middleware'=>['token']],function(){
     Route::resource('/order','OrderController');
 });
 
-
-
 /**
  *   积分模块
  */
 Route::group(['namespace' => 'Product','middleware'=>['token']],function(){
     Route::get('/discount','ProductController@discount');
-
 });
-
 
 /**
  * 通用的接口
@@ -70,10 +66,6 @@ Route::group(['namespace' => 'Product','middleware'=>['token']],function(){
 Route::group(['namespace' => 'Address'],function(){
     Route::resource('/address','AddressController');
 });
-
-
-
-
 
 /**
  * Fnb 分类
@@ -83,9 +75,6 @@ Route::group(['namespace' => 'Fnb'],function(){
     Route::resource('/fnb/category','CategoryController');
 
 });
-
-
-
 
 /**
  * 购物车模块
@@ -98,7 +87,13 @@ Route::group(['namespace' => 'ShoppingCart','middleware'=>['token']],function(){
 /**
  *用户消息模块
  */
-
 Route::group(['namespace' => 'Message','middleware'=>['token']],function(){
     Route::resource('/message','MessageController');  //购车相关
+});
+
+/**
+ * 获得商品相关
+ */
+Route::group(['namespace' => 'Product','middleware'=>['token']],function(){
+    Route::resource('/product','ProductController');  //购车相关
 });
