@@ -4,6 +4,7 @@ use App\Jobs\ChangeOrderStatus;
 use App\Model\Order;
 use App\Model\OrderDetail;
 use App\Model\Product;
+use App\Utils\Message;
 use App\Utils\ReturnData;
 use App\Utils\Util;
 use Carbon\Carbon;
@@ -119,7 +120,8 @@ class OrderController extends Controller
                     'user_id'=>$request->input('user_id'),
                     'user_address_id'=>$request->input('user_address_id'),
                     'remark'=>$request->input('remark') ? $request->input('remark') : '',
-                    'created_at'=>date('Y-m-d H:i:s',time())
+                    'created_at'=>date('Y-m-d H:i:s',time()),
+                    'address_detail'=>$request->input('address_detail'),
                 ]
             );
             foreach($arr as $k=>$v){
@@ -241,7 +243,9 @@ class OrderController extends Controller
     {
         //  这里做软删除
         try{
-           DB::table('t_order')->where(id,$id)->update(['is_delete' => 1]);
+           DB::table('t_order')->where('id',$id)->update(['is_delete' => 1]);
+          // Message::create(1,1,1,'订单被删除');
+            return ReturnData::returnDataResponse(['message'=>'删除成功'],200);
         }catch (\Exception $e){
           return ReturnData::returnDataError($e->getMessage(),402);
         }

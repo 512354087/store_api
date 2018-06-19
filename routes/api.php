@@ -94,3 +94,11 @@ Route::group(['namespace' => 'Fnb'],function(){
 Route::group(['namespace' => 'ShoppingCart','middleware'=>['token']],function(){
     Route::resource('/shopping_cart','ShoppingCartController');  //购车相关
 });
+
+/**
+ *用户消息模块
+ */
+
+Route::group(['namespace' => 'Message','middleware'=>['token']],function(){
+    Route::resource('/message','MessageController');  //购车相关
+});

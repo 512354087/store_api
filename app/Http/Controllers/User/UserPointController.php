@@ -22,25 +22,33 @@ class UserPointController extends Controller
             $offset = $request->input('offset') ? $request->input('offset') : 0;
             $limit = $request->input('limit') ? $request->input('limit') : 10;
             $this->validate($request, [
-                'user_id' => 'required|integer'
+                'user_id' => 'integer',
+                'type'=>'integer'
+
             ]);
-            $user_id = $request->input('user_id');
+            $user_id = $request->input('user_id') ? $request->input('user_id') : '' ;
+            $type = $request->input('type') ? $request->input('type') : '' ;
             //搜索某个时间段内的数据库匹配的数据
             // SELECT *,SUM(a.point) as total  FROM (SELECT user_point_log.*,user_point_type.title AS title FROM user_point_log LEFT JOIN user_point_type ON user_point_type.id = user_point_log.type_id ) AS a
-            //WHERE a.user_id = 1  And  a.create_at  between '2010-7-12 11:18:54' and '2019-7-12 11:22:20'
-
-            //搜索一个星期内数据库匹配的数据
-            // SELECT user_point_log.*,user_point_type.title AS title FROM user_point_log LEFT JOIN user_point_type ON user_point_type.id = user_point_log.type_id
-            // WHERE user_point_log.user_id = 1 And  DATE_SUB(CURDATE(), INTERVAL 7 DAY) <= date(user_point_log.create_at);
-
-            $list=DB::table('user_point_log')->leftJoin('user_point_type','user_point_log.type_id','=','user_point_type.id')
-                ->where([['user_id', '=', $user_id]])
-                //->whereNotNull('create_at')    查找不为空的字段
+            //WHERE a.user_id = 1  And  a.create_at  between '2010-7-12 11:18:54' and '2019-7-12 11:22:20';
+//            //搜索一个星期内数据库匹配的数据
+//            $list=DB::table('user_point_log')
+//                ->leftJoin('user_point_type','user_point_log.type_id','=','user_point_type.id')
+//                ->whereRaw('user_point_log.user_id = ? And  DATE_SUB(CURDATE(), INTERVAL 7 DAY) <= date(user_point_log.created_at)',[$user_id])
+//                ->get();
+            $list=DB::table('user_point_log')
+                ->leftJoin('user_point_type','user_point_log.type_id','=','user_point_type.id')
+                ->whereRaw('case when ? then  user_point_log.user_id = ? else 1=1 end',[$user_id,$user_id])
+                ->whereRaw('case when ? then  user_point_log.type = ? else 1=1 end',[$type,$type])
                 ->get();
-            return ReturnData::returnListResponse($list,10,200);
+            $count=DB::table('user_point_log')
+                ->leftJoin('user_point_type','user_point_log.type_id','=','user_point_type.id')
+                ->whereRaw('user_point_log.user_id = ?',[$user_id])
+                ->count();
+            return ReturnData::returnListResponse($list,$count,200);
 
         }catch (\Exception $e){
-            return ReturnData::returnDataError('参数错误',402);
+            return ReturnData::returnDataError($e->getMessage(),402);
         }
     }
 
@@ -70,16 +78,15 @@ class UserPointController extends Controller
             $isHasUser=DB::table('users')->where('id', $user_id)->exists();
             //手动控制数据库事务
             DB::beginTransaction();
-              $pointLog['created_at'] =date("Y-m-d  H:i:s",time());
+            $pointLog['created_at'] =date("Y-m-d  H:i:s",time());
 
             if ($isHasUser){
                 DB::table('user_point_log')->insert([
                     $pointLog
                 ]);
-
                 if($Point){
                     $num=$pointLog['type']==1 ? $pointLog['point'] + $Point->num :  $Point->num - $pointLog['point'];
-                    DB::table('user_point')->where('user_id', $user_id)->update(['created_at' => date("Y-m-d H:i:s",time()),'updated_at'=>date("Y-m-d H:i:s",time()),'num'=> $num>0 ? $num :0]);
+                    DB::table('user_point')->where('user_id', $user_id)->update(['created_at' => date("Y-m-d H:i:s",time()),'updated_at'=>date("Y-m-d H:i:s",time()),'num'=> $num>0 ? $num : 0]);
 
                 }else{
                     $num=$pointLog['type']==1 ? $pointLog['point'] + $Point->num :  $Point->num - $pointLog['point'];
@@ -88,11 +95,11 @@ class UserPointController extends Controller
                     ]);
                 }
             }
-          DB::commit();
-           return ReturnData::returnDataResponse(1,200);
+            DB::commit();
+            return ReturnData::returnDataResponse(1,200);
 
         }catch (\Exception $e){
-           DB::rollBack();
+            DB::rollBack();
             return ReturnData::returnDataError($e,402);
         }
 
@@ -144,14 +151,15 @@ class UserPointController extends Controller
     }
 
     /**
-     * 更改用户积分总数
-     * @param type $
-     * @param num $
+     * @param $type
+     * @param $num
+     * @param $user_id
+     * @return int
      */
     public function updateNum($type,$num,$user_id)
     {
-        $resnum=DB::table('user_point')->where('user_id',$user_id)->value('num');
-        $res=DB::table('user_point')->where('user_id',$user_id)->update(['num'=>$type==1 ? $num+$resnum : $resnum- $num]);
+        $resNum=DB::table('user_point')->where('user_id',$user_id)->value('num');
+        $res=DB::table('user_point')->where('user_id',$user_id)->update(['num'=>$type==1 ? $num+$resNum : $resNum - $num]);
         return $res;
     }
 }
