@@ -43,6 +43,7 @@ Route::group(['namespace' => 'User','middleware'=>['token']],function(){
  */
 Route::group(['namespace' => 'Cate','middleware'=>['token']],function(){
     Route::resource('/cate','CateController');
+    Route::get('/product_attributes ','CateController@productAttributes');
     Route::get ('/keyword','CateController@keyword');
 });
 

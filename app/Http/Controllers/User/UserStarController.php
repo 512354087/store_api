@@ -24,6 +24,7 @@ class UserStarController extends Controller
             $offset=$request->input('offset') ? $request->input('offset') : 0;
             $res=DB::table('user_star')
                 ->where('user_id',$request->input('user_id'))
+                ->whereRaw('CASE  WHEN  ? THEN user_star.product_id= ? ELSE 1=1 END',[$request->input('product_id'),$request->input('product_id')])
                 ->leftJoin('product','user_star.product_id','=','product.id')
                 ->limit($limit)
                 ->offset($offset)
@@ -82,7 +83,12 @@ class UserStarController extends Controller
 
     }
 
-
+    /**
+     * 取消收藏
+     * @param $product_id
+     * @param $user_id
+     * @return mixed
+     */
     public function unStar($product_id,$user_id){
 
         try{
@@ -92,14 +98,14 @@ class UserStarController extends Controller
                 ['product_id', '=', $product_id],
             ])->exists();
             if ($isExist){
-                DB::table('users')->where([
+                DB::table('user_star')->where([
                     ['product_id', '=', $product_id],
                     ['user_id', '=', $user_id]
                 ])->delete();
             }
             return ReturnData::returnDataResponse(['message'=>'删除成功'],200);
         }catch (\Exception $e){
-            return ReturnData::returnDataError($e->getMessage(),401);
+            return ReturnData::returnDataError($e->getMessage(),402);
         }
 
     }

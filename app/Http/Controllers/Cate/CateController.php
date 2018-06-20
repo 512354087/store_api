@@ -22,11 +22,18 @@ class CateController extends Controller
     }
 
     public function keyword(Request $request){
-
         $keyword=$request->input('keyword') ? $request->input('keyword') : '';
         $data = DB::select('select * from product_cate WHERE cate_name like ? ',['%'.$keyword.'%']);
         return ReturnData::returnNoPageListResponse($data,200);
     }
+
+
+    public function productAttributes(Request $request){
+        $pid=$request->input('pid') ? $request->input('pid') : false;
+        $data = DB::select('select * from product_attributes WHERE 1=1 AND IF(?, pid = ?, 0 = 0)',[$pid,$pid]);
+        return ReturnData::returnNoPageListResponse($data,200);
+    }
+
     /**
      * Show the form for creating a new resource.
      *
