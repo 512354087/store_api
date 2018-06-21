@@ -16,7 +16,7 @@ class CateController extends Controller
      */
     public function index(Request $request)
     {
-        $pid=$request->input('pid') ? $request->input('pid') : false;
+        $pid=$request->input('pid') ? $request->input('pid') : 0;
         $data = DB::select('select * from product_cate WHERE 1=1 AND IF(?, pid = ?, 0 = 0)',[$pid,$pid]);
         return ReturnData::returnNoPageListResponse($data,200);
     }

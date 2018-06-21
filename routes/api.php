@@ -97,4 +97,5 @@ Route::group(['namespace' => 'Message','middleware'=>['token']],function(){
  */
 Route::group(['namespace' => 'Product','middleware'=>['token']],function(){
     Route::resource('/product','ProductController');  //购车相关
+    Route::resource('/product_stock','ProductStockController');
 });
