@@ -20,7 +20,7 @@ class UserAddressController extends Controller
     {
        try{
         $user_id=$request->input('user_id') ? $request->input('user_id') : '';
-           $user_address=UserAddress::select('user_address.*','address1.name as province','address2.name as city','address3.name as county','address4.name as town ')
+           $user_address=UserAddress::select('user_address.*','address1.name as province','address2.name as city','address3.name as county','address4.name as town')
                ->leftJoin('address as address1','user_address.province_id','=','address1.id')
                ->leftJoin('address as address2','user_address.city_id','=','address2.id')
                ->leftJoin('address as address3','user_address.county_id','=','address3.id')

@@ -18,18 +18,18 @@ class ProductStockController extends Controller
      */
     public function index(Request $request)
     {
-        try{
             $product_id = $request->input('product_id') ? $request->input('product_id') : false;
             $color_id = $request->input('color_id') ? $request->input('color_id') : false;
             $size_id = $request->input('size_id') ? $request->input('size_id') : false;
             $res=DB::table('product_stock')
-            ->select('product_stock.*', 'a.id as color_id' ,'a.name as color_name', 'b.id as size_id' ,'b.name as size_name' )
-            ->whereRaw('CASE  WHEN  ? THEN  product_stock.product_id = ? else 1=1 ',[$product_id,$product_id])
-            ->whereRaw('CASE  WHEN  ? THEN  product_stock.color_id = ? else 1=1 ',[$color_id,$color_id])
-            ->whereRaw('CASE  WHEN  ? THEN  product_stock.size_id = ? else 1=1 ',[$size_id,$size_id])
+            ->select('product_stock.*', 'a.id as color_id' ,'a.name as color_name', 'b.id as size_id' ,'b.name as size_name')
+            ->whereRaw('CASE  WHEN  ? THEN  product_stock.product_id = ? else 1=1 end',[$product_id,$product_id])
+            ->whereRaw('CASE  WHEN  ? THEN  product_stock.color_id = ? else 1=1 end',[$color_id,$color_id])
+            ->whereRaw('CASE  WHEN  ? THEN  product_stock.size_id = ? else 1=1 end',[$size_id,$size_id])
             ->leftJoin('product_attributes as a','a.id','=','product_stock.color_id')
             ->leftJoin('product_attributes as b','b.id','=','product_stock.size_id')
             ->get();
+        try{
             return ReturnData::returnDataResponse($res,200);
         } catch (\Exception $e){
             return ReturnData::returnDataError($e,402);

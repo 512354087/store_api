@@ -39,7 +39,7 @@ class UserController extends Controller
     public function show($id)
     {
         try{
-            $user=User::select('users.*','user_point.id as point_id ','user_point.num as point')->leftJoin('user_point','users.id','=','user_point.user_id')->where('users.id', $id)->first();
+            $user=User::select('users.*','user_point.id as point_id','user_point.num as point')->leftJoin('user_point','users.id','=','user_point.user_id')->where('users.id', $id)->first();
             return ReturnData::returnDataResponse($user,200);
         }catch (\Exception $e){
             return ReturnData::returnDataError('参数验证失败',401);

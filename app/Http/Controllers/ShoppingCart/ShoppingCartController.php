@@ -19,7 +19,7 @@ class ShoppingCartController extends Controller
         try{
             $limit=$request->input('limit') ? $request->input('limit') : 10;
             $offset=$request->input('offset') ? $request->input('offset') : 0;
-            $res=DB::table('shopping_cart')->select('product.*','product_stock.*','product.id as product_id','product_stock.id as stock_id','attributes.id as  color_id','size.id as  size_id','attributes.name as  color_name','size.name as size_name')
+            $res=DB::table('shopping_cart')->select('shopping_cart.*','product.title','product.price','product.is_delete','product.logo','product_stock.color_id','product_stock.size_id','product_stock.num as stock_num','product.id as product_id','product_stock.id as stock_id','attributes.id as  color_id','size.id as  size_id','attributes.name as  color_name','size.name as size_name')
                 ->leftJoin('product','shopping_cart.product_id','=','product.id')
                 ->leftJoin('product_stock','shopping_cart.stock_id','=','product_stock.id')
                 ->leftJoin('product_attributes as attributes','product_stock.color_id','=','attributes.id')
@@ -129,8 +129,20 @@ class ShoppingCartController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, $id)
+    public function update(Request $request,$id)
     {
+          
+        //修改购物车商品
+        try{
+            $list=$request->all();
+            DB::table('shopping_cart')->where('id',$id)->update(
+                $list
+            );
+            return ReturnData::returnDataResponse(['msg'=>'修改成功'],200);
+        }catch (\Exception $e){
+            return ReturnData::returnDataError(['msg'=>$e->getMessage()],402);
+        }
+
 
     }
 
