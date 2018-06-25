@@ -57,7 +57,7 @@ class UserAddressController extends Controller
      */
     public function store(Request $request)
     {
-       // try{
+       try{
             $user=$request->all();
             $user_id=$request->input('user_id');
             if($user['is_default']){
@@ -68,9 +68,9 @@ class UserAddressController extends Controller
                 $res=UserAddress::create($user);
                 return ReturnData::returnDataResponse($res,200);
             }
-//        }catch (\Exception $e){
-//             return ReturnData::returnDataError('参数验证失败',401);
-//        }
+        }catch (\Exception $e){
+             return ReturnData::returnDataError( $e->getMessage(),402);
+        }
     }
 
     /**
@@ -116,13 +116,17 @@ class UserAddressController extends Controller
      */
     public function update(Request $request,$id)
     {
-
        try{
            $user=$request->all();
-           $userAddress=UserAddress::where('id',$id)->update($user);
-           return ReturnData::returnDataResponse($userAddress,200);
+           DB::beginTransaction();
+           DB::table('user_address')->where('id',$id)->update($user);
+           $user=table('user_address')->where('id',$id)->first();
+           DB::table('user_address')->where([['is_default','=',1],['user_id','=',$user->user_id]])->update(['is_default' => 0]);
+           DB::commit();
+           return ReturnData::returnDataResponse(1,200);
        }catch (\Exception $e){
-           return ReturnData::returnDataError('参数错误',402);
+           DB::rollBack();
+           return ReturnData::returnDataError($e->getMessage(),402);
        }
 
 
