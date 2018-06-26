@@ -19,4 +19,9 @@ class Order extends Model
          return $this->hasMany('App\Model\OrderDetail','order_id');
 
     }
+    public function userAddress(){
+
+        return $this->belongsTo('App\Model\UserAddress','user_address_id');
+
+    }
 }

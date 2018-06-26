@@ -117,11 +117,11 @@ class UserAddressController extends Controller
     public function update(Request $request,$id)
     {
        try{
-           $user=$request->all();
+           $res=$request->all();
            DB::beginTransaction();
-           DB::table('user_address')->where('id',$id)->update($user);
-           $user=table('user_address')->where('id',$id)->first();
+           $user=DB::table('user_address')->where('id',$id)->first();
            DB::table('user_address')->where([['is_default','=',1],['user_id','=',$user->user_id]])->update(['is_default' => 0]);
+           DB::table('user_address')->where('id',$id)->update($res);
            DB::commit();
            return ReturnData::returnDataResponse(1,200);
        }catch (\Exception $e){

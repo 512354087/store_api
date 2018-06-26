@@ -28,8 +28,11 @@ class OrderController extends Controller
             $offset = $request->input('offset') ? $request->input('offset') : 0;
             $limit = $request->input('limit') ? $request->input('limit') : 10;
             $user_id=$request->input('user_id') ? $request->input('user_id') : 0;
+            $status=$request->input('status') ? $request->input('status') : 0;
             $list=Order::whereRaw("(CASE WHEN '$user_id'<> 0 THEN user_id=$user_id  ELSE 1=1 END)")
+                ->whereRaw("CASE WHEN ? THEN status = ? ELSE 1=1 END",[$status,$status])
                 ->where('is_delete',0)
+                ->orderBy('id', 'desc')
                 ->limit($limit)
                 ->offset($offset)
                 ->get();
@@ -37,6 +40,8 @@ class OrderController extends Controller
                 $v->order_detail=OrderDetail::selectRaw('*,product.id As product_id')->where('order_id',$v->id)->leftJoin('product','order_detail.product_id','=','product.id')->get();
             }
             $count=Order::whereRaw("(CASE WHEN '$user_id'<> 0 THEN user_id=$user_id  ELSE 1=1 END)")
+                ->where('is_delete',0)
+                ->whereRaw("CASE WHEN ? THEN status = ? ELSE 1 = 1 end",[$status,$status])
                 ->count();
             return ReturnData::returnListResponse($list,$count,200);
 
@@ -158,10 +163,19 @@ class OrderController extends Controller
     public function show($id)
     {
         try{
-            $order=Order::where('id',$id)->with('orderdetail')->first();
+            $order=Order::where('id',$id)->with('userAddress')->first();
+            $product_list=DB::table('order_detail')
+                ->selectRaw('order_detail.*, product.id as product_id,product.logo, product.title, product.price, product_stock.size_id, product_stock.color_id,attributes.name as color_name,size.name as size_name')
+                ->leftJoin('product','order_detail.product_id','=','product.id')
+                ->leftJoin('product_stock','order_detail.stock_id','=','product_stock.id')
+                ->leftJoin('product_attributes as attributes','product_stock.color_id','=','attributes.id')
+                ->leftJoin('product_attributes as size','product_stock.size_id','=','size.id')
+                ->where('order_id',$order->id)
+                ->get();
+            $order->orderdetail=$product_list;
             return ReturnData::returnDataResponse($order,200);
         }catch (\Exception $e){
-            return ReturnData::returnDataError('参数错误',402);
+            return ReturnData::returnDataError($e->getMessage(),402);
 
         }
 

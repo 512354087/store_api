@@ -17,19 +17,25 @@ class ShoppingCartController extends Controller
     public function index(Request $request)
     {
         try{
+            $arr=$request->all();
             $limit=$request->input('limit') ? $request->input('limit') : 10;
             $offset=$request->input('offset') ? $request->input('offset') : 0;
-            $res=DB::table('shopping_cart')->select('shopping_cart.*','product.title','product.price','product.is_delete','product.logo','product_stock.color_id','product_stock.size_id','product_stock.num as stock_num','product.id as product_id','product_stock.id as stock_id','attributes.id as  color_id','size.id as  size_id','attributes.name as  color_name','size.name as size_name')
+            $is_delete=isset($arr['is_delete']) ? $arr['is_delete'] : '';
+            //DB::enableQueryLog();
+            $res=DB::table('shopping_cart')->select('shopping_cart.*','product.title','product.price','product.is_delete as  product_is_delete','product.logo','product_stock.color_id','product_stock.size_id','product_stock.num as stock_num','product.id as product_id','product_stock.id as stock_id','attributes.id as  color_id','size.id as  size_id','attributes.name as  color_name','size.name as size_name')
                 ->leftJoin('product','shopping_cart.product_id','=','product.id')
                 ->leftJoin('product_stock','shopping_cart.stock_id','=','product_stock.id')
                 ->leftJoin('product_attributes as attributes','product_stock.color_id','=','attributes.id')
                 ->leftJoin('product_attributes as size','product_stock.size_id','=','size.id')
                 ->whereRaw('case when ? then shopping_cart.user_id= ? else 1=1 end',[$request->input('user_id'),$request->input('user_id')])
+                ->whereRaw("case when ? <> '' then shopping_cart.is_delete = ? else 1=1 end",[$is_delete,$is_delete])
                 ->limit($limit)
                 ->offset($offset)
                 ->get();
+            //return DB::getQueryLog();
             $count=DB::table('shopping_cart')
                 ->whereRaw('case when ? then shopping_cart.user_id= ? else 1=1 end',[$request->input('user_id'),$request->input('user_id')])
+                ->whereRaw("case when ? <> '' then shopping_cart.is_delete = ? else 1=1 end",[$is_delete,$is_delete])
                 ->count();
             return ReturnData::returnListResponse($res,$count,200);
         }catch (\Exception $e){
