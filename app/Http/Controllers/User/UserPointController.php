@@ -5,6 +5,7 @@ namespace App\Http\Controllers\User;
 use App\Model\UserPoint;
 use App\Model\UserPointLog;
 use App\Utils\ReturnData;
+use App\Utils\Util;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\DB;
@@ -24,10 +25,10 @@ class UserPointController extends Controller
             $this->validate($request, [
                 'user_id' => 'integer',
                 'type'=>'integer'
-
             ]);
             $user_id = $request->input('user_id') ? $request->input('user_id') : '' ;
             $type = $request->input('type') ? $request->input('type') : '' ;
+            $type_id=$request->input('type_id') ? $request->input('type_id') : '' ;
             //搜索某个时间段内的数据库匹配的数据
             // SELECT *,SUM(a.point) as total  FROM (SELECT user_point_log.*,user_point_type.title AS title FROM user_point_log LEFT JOIN user_point_type ON user_point_type.id = user_point_log.type_id ) AS a
             //WHERE a.user_id = 1  And  a.create_at  between '2010-7-12 11:18:54' and '2019-7-12 11:22:20';
@@ -40,12 +41,35 @@ class UserPointController extends Controller
                 ->leftJoin('user_point_type','user_point_log.type_id','=','user_point_type.id')
                 ->whereRaw('case when ? then  user_point_log.user_id = ? else 1=1 end',[$user_id,$user_id])
                 ->whereRaw('case when ? then  user_point_log.type = ? else 1=1 end',[$type,$type])
+                ->whereRaw('case when ? then  user_point_log.type_id = ? else 1=1 end',[$type_id,$type_id])
+                ->limit($limit)
+                ->offset($offset)
                 ->get();
             $count=DB::table('user_point_log')
                 ->leftJoin('user_point_type','user_point_log.type_id','=','user_point_type.id')
                 ->whereRaw('user_point_log.user_id = ?',[$user_id])
+                ->whereRaw('case when ? then  user_point_log.type_id = ? else 1=1 end',[$type_id,$type_id])
                 ->count();
-            return ReturnData::returnListResponse($list,$count,200);
+            //查看今天是否签到
+            $hasSign=false;
+            foreach ($list as $k=>$v){
+               if (Util::get_curr_time_section($v->created_at)){
+                   $hasSign=true;
+               }
+            }
+            //查看连续签到的天数
+
+            $user_point=DB::select('select round(a.sum,0),round(a.pre,0),round(a.sum - a.pre,0) as user_points,a.type from (select tab.sum,@tab.sum as pre,tab.type,@tab.sum:= tab.sum from (SELECT sum(point) as sum,type FROM user_point_log WHERE user_id = ? GROUP BY type order by type desc) tab,(SELECT @tab.sum:=0)s) a where pre <> 0',[$user_id]);
+            return  response()->json([
+                'status'=>200,
+                'data'=>[
+                    'user_point'=>$user_point[0]->user_points,
+                    'count'=>$count,
+                    'list'=>$list,
+                    'hasSign'=>$hasSign
+                ]
+
+            ]);
 
         }catch (\Exception $e){
             return ReturnData::returnDataError($e->getMessage(),402);
@@ -71,15 +95,20 @@ class UserPointController extends Controller
     public function store(Request $request)
     {
         try{
+            $this->validate($request,[
+                'user_id'=>'required|integer',
+                'type_id'=>'required|integer',
+                'type'=>'required|integer',
+                'point'=>'required|integer'
+            ]);
             $pointLog=$request->all();
-            $user_id=$request->input('user_id');
+            $user_id=$request->input('user_id') ? $request->input('user_id')  : '' ;
             //判断数据库中是否有用户   是否有积分表
             $Point=DB::table('user_point')->where('user_id', $user_id)->first();
             $isHasUser=DB::table('users')->where('id', $user_id)->exists();
             //手动控制数据库事务
             DB::beginTransaction();
             $pointLog['created_at'] =date("Y-m-d  H:i:s",time());
-
             if ($isHasUser){
                 DB::table('user_point_log')->insert([
                     $pointLog
@@ -100,7 +129,7 @@ class UserPointController extends Controller
 
         }catch (\Exception $e){
             DB::rollBack();
-            return ReturnData::returnDataError($e,402);
+            return ReturnData::returnDataError(['mes'=>$e->getMessage()],402);
         }
 
     }

@@ -55,7 +55,7 @@ Route::group(['namespace' => 'Order','middleware'=>['token']],function(){
 });
 
 /**
- *   积分模块
+ *   折扣模块
  */
 Route::group(['namespace' => 'Product','middleware'=>['token']],function(){
     Route::get('/discount','ProductController@discount');
@@ -98,4 +98,5 @@ Route::group(['namespace' => 'Message','middleware'=>['token']],function(){
 Route::group(['namespace' => 'Product','middleware'=>['token']],function(){
     Route::resource('/product','ProductController');  //购车相关
     Route::resource('/product_stock','ProductStockController');
+    Route::resource('/product_comment','ProductCommentController');
 });
