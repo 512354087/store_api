@@ -22,7 +22,7 @@ class AddressController extends Controller
             $res=Address::where('pid',$pid)->get();
             return ReturnData::returnDataResponse($res,200);
         }catch (\Exception $e){
-            return ReturnData::returnDataError('参数验证失败',402);
+            return ReturnData::returnDataError(['msg'=>$e->getMessage()],402);
         }
     }
 
