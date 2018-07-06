@@ -82,21 +82,29 @@ Route::group(['namespace' => 'Fnb'],function(){
  */
 
 Route::group(['namespace' => 'ShoppingCart','middleware'=>['token']],function(){
-    Route::resource('/shopping_cart','ShoppingCartController');  //购车相关
+    Route::resource('/shopping_cart','ShoppingCartController');
 });
 
 /**
  *用户消息模块
  */
 Route::group(['namespace' => 'Message','middleware'=>['token']],function(){
-    Route::resource('/message','MessageController');  //购车相关
+    Route::resource('/message','MessageController');
 });
 
 /**
  * 获得商品相关
  */
 Route::group(['namespace' => 'Product','middleware'=>['token']],function(){
-    Route::resource('/product','ProductController');  //购车相关
+    Route::resource('/product','ProductController');
     Route::resource('/product_stock','ProductStockController');
     Route::resource('/product_comment','ProductCommentController');
+});
+
+/**
+ * admin
+ */
+
+Route::group(['namespace' => 'Admin'],function(){
+    Route::post('/web_login','UserController@login');  //web登录
 });
