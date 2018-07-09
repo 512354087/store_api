@@ -21,15 +21,15 @@ use Illuminate\Http\Request;
                 'username'=>'required',
                 'password'=>'required'
             ]);
-            $ishas=DB::table('t_admin')
+            $ishas=DB::table('t_admin')->select('id','username','phone')
                 ->where('username',$request->input('username'))
                 ->where('password',$request->input('password'))
                 ->exists();
             if ($ishas){
-                $admin=DB::table('t_admin')
+                $admin=DB::table('t_admin')->select('id','username','phone')
                     ->where('username',$request->input('username'))
                     ->where('password',$request->input('password'))
-                    ->frist();
+                    ->first();
                 return ReturnData::returnDataResponse($admin,200);
             }else{
                 throw new \Exception('用户名或密码错误');
