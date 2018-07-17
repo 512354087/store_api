@@ -28,6 +28,7 @@ Route::get('/test','Order\OrderController@test');
 
 Route::group(['namespace' => 'User'],function(){
     Route::post('/wx_login','UserController@wx_login');
+    Route::get('/user','UserController@index');
 });
 Route::group(['namespace' => 'User','middleware'=>['token']],function(){
     Route::resource('/user_address','UserAddressController');  //收货地址相关

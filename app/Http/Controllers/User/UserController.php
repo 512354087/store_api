@@ -32,7 +32,9 @@ class UserController extends Controller
 
     public function index(Request $request)
     {
-
+        $res2=DB::table('users')->get();
+        $count=DB::table('users')->count();
+        return ReturnData::returnListResponse($res2,$count,200);
 
     }
 
