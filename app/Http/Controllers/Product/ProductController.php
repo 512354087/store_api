@@ -102,12 +102,9 @@ class ProductController extends Controller
             $res->stock_num=$num[0]->num;
             $res->comment_list=$comment_list;
             return ReturnData::returnDataResponse($res,200);
-
         }catch (\Exception $e){
               return ReturnData::returnDataError($e->getMessage(),402);
         }
-
-
     }
     public function resolve2( $list,$pid = 0) {
         $manages = array();
