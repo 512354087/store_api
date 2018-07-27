@@ -110,4 +110,5 @@ Route::group(['namespace' => 'Admin'],function(){
     Route::post('/web_login','UserController@login');  //web登录
 });
 Route::get('/product','Product\ProductController@index');
+Route::get('/order','Order\OrderController@index');
 Route::get('/product_stock','Product\ProductStockController@index');

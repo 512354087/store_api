@@ -29,10 +29,11 @@ class OrderController extends Controller
             $limit = $request->input('limit') ? $request->input('limit') : 10;
             $user_id=$request->input('user_id') ? $request->input('user_id') : 0;
             $status=$request->input('status') ? $request->input('status') : 0;
+            $type=$request->input('type') ? $request->input('type') : 'desc';
             $list=Order::whereRaw("(CASE WHEN '$user_id'<> 0 THEN user_id=$user_id  ELSE 1=1 END)")
                 ->whereRaw("CASE WHEN ? THEN status = ? ELSE 1=1 END",[$status,$status])
                 ->where('is_delete',0)
-                ->orderBy('id', 'desc')
+                ->orderBy('id',$type )
                 ->limit($limit)
                 ->offset($offset)
                 ->get();
